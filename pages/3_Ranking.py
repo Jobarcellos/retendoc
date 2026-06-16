@@ -92,7 +92,7 @@ fig.add_vline(
     annotation_position="top right"
 )
 fig.add_hline(
-    x=media_nacional_ird,
+    y=media_nacional_ird,
     line_dash="dot",
     line_color="#999",
     annotation_text=f"Média IRD Brasil: {media_nacional_ird:.3f}",
