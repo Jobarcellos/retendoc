@@ -1,117 +1,120 @@
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-import streamlit as st
 import pandas as pd
-import plotly.express as px
-from utils.dados import carregar_dados, formatar_br
+import streamlit as st
 
-st.set_page_config(page_title="Painel da Rede · RegDoc", layout="wide")
+NOMES_INDICADORES = {
+    "IRD": "Regularidade dos professores",
+    "ATU": "Alunos por turma",
+    "AFD": "Formação adequada (%)",
+    "IED": "Sobrecarga dos professores (%)",
+    "ICG": "Complexidade da escola",
+}
 
-st.title("🗺️ Painel da Rede Nacional")
-st.caption("Visão agregada do IRD por UF e ano · Escolas públicas de educação básica")
+EXPLICACOES = {
+    "IRD": """
+**O que é:** Indica se os mesmos professores continuam na escola de um ano para o outro.
+Uma escola com alta regularidade é aquela onde os professores permanecem, constroem vínculos
+com os alunos e mantêm a continuidade do trabalho pedagógico.
 
-df = carregar_dados()
+**Como é medido:** O Inep observa a presença de cada professor na escola nos últimos 5 anos.
+Professores que estão há mais tempo e de forma contínua recebem pontuação maior.
+O resultado é uma escala de **0 a 5**:
 
-# ── Filtros ──────────────────────────────────────────────────────────────────
-col_f1, col_f2 = st.columns([2, 1])
+| Valor | Situação |
+|---|---|
+| 0 a 2 | Corpo docente muito instável — alta rotatividade |
+| 2 a 3 | Rotatividade moderada — atenção necessária |
+| 3 a 4 | Regularidade satisfatória |
+| 4 a 5 | Corpo docente muito estável |
 
-with col_f1:
-    ufs = sorted(df["SG_UF"].dropna().unique())
-    ufs_sel = st.multiselect(
-        "Filtrar por UF (deixe vazio para Brasil inteiro)",
-        options=ufs,
-        default=[]
-    )
+**Por que importa:** A instabilidade do corpo docente prejudica a aprendizagem,
+sobrecarrega a gestão e fragiliza os projetos pedagógicos.
+""",
+    "ATU": """
+**O que é:** Média de estudantes em cada turma da escola ou município.
 
-with col_f2:
-    anos_disp = sorted(df["ANO"].unique())
-    ano_sel = st.selectbox("Ano de referência", anos_disp, index=len(anos_disp) - 2)
+**Como é medido:** Total de alunos matriculados dividido pelo número de turmas,
+considerando o Ensino Fundamental.
 
-df_filtrado = df[df["ANO"] == ano_sel].copy()
-if ufs_sel:
-    df_filtrado = df_filtrado[df_filtrado["SG_UF"].isin(ufs_sel)]
+**Por que importa:** Turmas muito cheias aumentam a sobrecarga do professor,
+dificultam o acompanhamento individual dos alunos e estão associadas
+a maior rotatividade docente. É o indicador com maior impacto na regularidade
+dos professores segundo a pesquisa.
+""",
+    "AFD": """
+**O que é:** Percentual de professores que lecionam na área em que se formaram.
 
-# ── Métricas nacionais ────────────────────────────────────────────────────────
-st.markdown("---")
-st.markdown(f"### Indicadores nacionais — {ano_sel}")
+**Como é medido:** O Inep verifica se a formação do professor é compatível
+com a disciplina e a etapa em que atua. O resultado é expresso em percentual (0 a 100%).
 
-m1, m2, m3, m4, m5 = st.columns(5)
-m1.metric("IRD médio",        formatar_br(df_filtrado["IRD"].mean()))
-m2.metric("ATU média",        formatar_br(df_filtrado["ATU"].mean(), 1))
-m3.metric("AFD média (%)",    formatar_br(df_filtrado["AFD"].mean(), 1))
-m4.metric("IED médio (%)",    formatar_br(df_filtrado["IED"].mean(), 1))
-m5.metric("Municípios",       f"{df_filtrado['CO_MUNICIPIO'].nunique():,}".replace(",", "."))
+**Por que importa:** Quanto maior esse percentual, mais qualificado é o quadro docente
+e maior tende a ser a identificação profissional do professor com seu trabalho.
+""",
+    "IED": """
+**O que é:** Indica se os professores trabalham em várias escolas, turnos ou etapas ao mesmo tempo.
 
-# ── IRD por UF ────────────────────────────────────────────────────────────────
-st.markdown("---")
-st.markdown("### IRD médio por UF")
+**Como é medido:** Considera o número de escolas, turnos e etapas em que cada professor atua.
+Valores altos indicam que muitos professores têm jornada fragmentada entre diferentes unidades.
 
-ird_uf = (
-    df_filtrado.groupby("SG_UF")["IRD"]
-    .mean()
-    .reset_index()
-    .sort_values("IRD", ascending=True)
-)
+**Por que importa:** Professores com jornada muito fragmentada tendem a ter menor
+vínculo com cada escola individualmente, o que pode afetar a continuidade pedagógica.
+""",
+    "ICG": """
+**O que é:** Mede o grau de dificuldade de administração de uma escola.
 
-fig_uf = px.bar(
-    ird_uf,
-    x="IRD",
-    y="SG_UF",
-    orientation="h",
-    color="IRD",
-    color_continuous_scale=["#c0392b", "#e67e22", "#f1c40f", "#27ae60"],
-    labels={"IRD": "IRD médio", "SG_UF": "UF"},
-    height=600
-)
-fig_uf.update_layout(coloraxis_showscale=False, margin=dict(l=20, r=20, t=20, b=20))
-st.plotly_chart(fig_uf, use_container_width=True)
+**Como é medido:** Considera o porte da escola, o número de turnos, etapas
+e modalidades de ensino oferecidas. A escala vai de **1 a 6**,
+onde 1 é a escola mais simples e 6 a mais complexa.
 
-# ── Evolução temporal nacional ────────────────────────────────────────────────
-st.markdown("---")
-st.markdown("### Evolução do IRD nacional (2013–2025)")
+**Por que importa:** Escolas mais complexas demandam maior esforço de gestão
+e coordenação pedagógica, o que pode influenciar as condições de trabalho dos professores.
+""",
+}
 
-df_evolucao = df.copy()
-if ufs_sel:
-    df_evolucao = df_evolucao[df_evolucao["SG_UF"].isin(ufs_sel)]
+FAIXAS_RISCO = {
+    "Risco elevado": "#c0392b",
+    "Atenção": "#e67e22",
+    "Moderado": "#f1c40f",
+    "Favorável": "#27ae60",
+}
 
-ird_ano = df_evolucao.groupby("ANO")["IRD"].mean().reset_index()
 
-fig_evo = px.line(
-    ird_ano,
-    x="ANO",
-    y="IRD",
-    markers=True,
-    labels={"ANO": "Ano", "IRD": "IRD médio"},
-    color_discrete_sequence=["#1a3a5c"]
-)
-fig_evo.update_layout(margin=dict(l=20, r=20, t=20, b=20))
-fig_evo.update_traces(line_width=2.5, marker_size=7)
-st.plotly_chart(fig_evo, use_container_width=True)
+@st.cache_data
+def carregar_municipal():
+    df = pd.read_parquet("municipal_consolidado.parquet")
+    df["CO_MUNICIPIO"] = df["CO_MUNICIPIO"].astype(str).str.replace(r"\.0$", "", regex=True)
+    df["ANO"] = df["ANO"].astype(int)
+    df["NO_MUNICIPIO"] = df["NO_MUNICIPIO"].fillna("Não identificado")
+    df["SG_UF"] = df["SG_UF"].fillna("??")
+    return df
 
-# ── Dispersão ATU × IRD ───────────────────────────────────────────────────────
-st.markdown("---")
-st.markdown("### ATU × IRD — dispersão por município")
-st.caption("ATU é o preditor mais robusto do modelo estimado (β = −0,0085; p < 0,001)")
 
-df_disp = df_filtrado.dropna(subset=["ATU", "IRD"]).copy()
+@st.cache_data
+def carregar_escola():
+    df = pd.read_parquet("escola_consolidado.parquet")
+    df["CO_MUNICIPIO"] = df["CO_MUNICIPIO"].astype(str).str.replace(r"\.0$", "", regex=True)
+    df["CO_ENTIDADE"] = df["CO_ENTIDADE"].astype(str).str.replace(r"\.0$", "", regex=True)
+    df["ANO"] = df["ANO"].astype(int)
+    df["NO_MUNICIPIO"] = df["NO_MUNICIPIO"].fillna("Não identificado")
+    df["SG_UF"] = df["SG_UF"].fillna("??")
+    df["NO_ENTIDADE"] = df["NO_ENTIDADE"].fillna("Escola não identificada")
+    return df
 
-if len(df_disp) > 0:
-    fig_scatter = px.scatter(
-        df_disp,
-        x="ATU",
-        y="IRD",
-        color="SG_UF",
-        hover_name="NO_MUNICIPIO",
-        hover_data={"SG_UF": True, "ATU": ":.1f", "IRD": ":.3f"},
-        labels={"ATU": "Média de alunos por turma", "IRD": "IRD médio"},
-        opacity=0.5,
-        height=450
-    )
-    fig_scatter.update_traces(marker_size=4)
-    fig_scatter.update_layout(margin=dict(l=20, r=20, t=20, b=20))
-    st.plotly_chart(fig_scatter, use_container_width=True)
-else:
-    st.info("ATU não disponível para o ano e filtro selecionados.")
 
+def classificar_risco(atu, media_nacional):
+    if pd.isna(atu) or pd.isna(media_nacional):
+        return "Sem dados", "#aaa"
+    desvio = atu - media_nacional
+    if desvio >= 5:
+        return "Risco elevado", "#c0392b"
+    elif desvio >= 2:
+        return "Atenção", "#e67e22"
+    elif desvio >= 0:
+        return "Moderado", "#f1c40f"
+    else:
+        return "Favorável", "#27ae60"
+
+
+def formatar_br(valor, casas=3):
+    if pd.isna(valor):
+        return "—"
+    return f"{float(valor):.{casas}f}".replace(".", ",")
