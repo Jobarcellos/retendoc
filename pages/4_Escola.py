@@ -1,1 +1,296 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+from utils.dados import carregar_escola, carregar_municipal, formatar_br
+
+st.set_page_config(page_title="Escola · RegDoc", layout="wide")
+
+st.markdown("""
+<style>
+.ird-destaque {
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+.ird-numero { font-size: 3.5rem; font-weight: bold; margin: 0; }
+.ird-label  { font-size: 1rem; margin: 0.2rem 0 0 0; }
+.ird-sit    { font-size: 1.3rem; font-weight: bold; margin: 0.5rem 0 0 0; }
+.card-ind {
+    border: 1px solid #dde4ed;
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    background: #f7f9fc;
+    margin-bottom: 0.5rem;
+}
+.card-ind h5 { margin: 0 0 0.3rem 0; color: #1a3a5c; font-size: 1rem; }
+.card-ind .valor { font-size: 1.6rem; font-weight: bold; color: #1a3a5c; }
+.card-ind .interp { font-size: 0.85rem; color: #555; margin-top: 0.3rem; }
+</style>
+""", unsafe_allow_html=True)
+
+st.title("🏫 Consulta por Escola")
+st.caption("Regularidade dos professores e indicadores educacionais por escola")
+
+df_esc = carregar_escola()
+df_mun = carregar_municipal()
+
+# ── Seleção ───────────────────────────────────────────────────────────────────
+col1, col2, col3 = st.columns([1, 2, 3])
+
+with col1:
+    ufs = sorted(df_esc["SG_UF"].dropna().unique())
+    uf_sel = st.selectbox("Estado", ufs, index=ufs.index("ES") if "ES" in ufs else 0)
+
+with col2:
+    municipios = (
+        df_esc[df_esc["SG_UF"] == uf_sel][["CO_MUNICIPIO","NO_MUNICIPIO"]]
+        .drop_duplicates().sort_values("NO_MUNICIPIO")
+    )
+    mun_sel = st.selectbox("Município", municipios["NO_MUNICIPIO"].tolist())
+
+co_mun = municipios[municipios["NO_MUNICIPIO"] == mun_sel]["CO_MUNICIPIO"].iloc[0]
+
+with col3:
+    escolas = (
+        df_esc[df_esc["CO_MUNICIPIO"] == co_mun][["CO_ENTIDADE","NO_ENTIDADE"]]
+        .drop_duplicates().sort_values("NO_ENTIDADE")
+    )
+    escola_sel = st.selectbox("Escola", escolas["NO_ENTIDADE"].tolist())
+
+co_esc = escolas[escolas["NO_ENTIDADE"] == escola_sel]["CO_ENTIDADE"].iloc[0]
+df_escola = df_esc[df_esc["CO_ENTIDADE"] == co_esc].sort_values("ANO").copy()
+
+if df_escola.empty:
+    st.warning("Sem dados para esta escola.")
+    st.stop()
+
+anos_disp = sorted(df_escola["ANO"].unique())
+ano_ref = st.selectbox("Ano de referência", anos_disp, index=len(anos_disp)-1)
+
+linha = df_escola[df_escola["ANO"] == ano_ref].iloc[0]
+
+# Médias de referência
+media_ird_nac = df_mun[df_mun["ANO"] == ano_ref]["IRD"].mean()
+media_ird_mun = df_mun[
+    (df_mun["ANO"] == ano_ref) & (df_mun["CO_MUNICIPIO"] == co_mun)
+]["IRD"].mean()
+media_atu_nac = df_mun[df_mun["ANO"] == ano_ref]["ATU"].mean()
+
+ird = linha["IRD"]
+
+# Classificação por cor
+if pd.isna(ird):
+    cor_hex = "#aaa"
+    cor_bg  = "#f0f0f0"
+    situacao = "Sem dados"
+    texto_sit = "Não há dados de regularidade para esta escola no ano selecionado."
+elif ird >= media_ird_nac:
+    cor_hex = "#27ae60"
+    cor_bg  = "#eafaf1"
+    situacao = "Situação favorável"
+    texto_sit = f"A regularidade dos professores desta escola ({formatar_br(ird)}) está <strong>acima da média nacional ({formatar_br(media_ird_nac)})</strong> e da média de {mun_sel} ({formatar_br(media_ird_mun)}). O corpo docente apresenta boa estabilidade."
+elif pd.notna(media_ird_mun) and ird >= media_ird_mun:
+    cor_hex = "#f39c12"
+    cor_bg  = "#fef9e7"
+    situacao = "Atenção"
+    texto_sit = f"A regularidade dos professores desta escola ({formatar_br(ird)}) está <strong>abaixo da média nacional ({formatar_br(media_ird_nac)})</strong>, mas acima da média de {mun_sel} ({formatar_br(media_ird_mun)}). Merece acompanhamento."
+else:
+    cor_hex = "#c0392b"
+    cor_bg  = "#fdedec"
+    situacao = "Alerta"
+    texto_sit = f"A regularidade dos professores desta escola ({formatar_br(ird)}) está <strong>abaixo da média nacional ({formatar_br(media_ird_nac)})</strong> e abaixo da média de {mun_sel} ({formatar_br(media_ird_mun)}). A gestão da rede deve priorizar o acompanhamento desta unidade."
+
+# Variação anual
+hist = df_escola[df_escola["ANO"] <= ano_ref].sort_values("ANO")
+if len(hist) >= 2:
+    variacao = hist["IRD"].iloc[-1] - hist["IRD"].iloc[-2]
+    ano_ant  = int(hist["ANO"].iloc[-2])
+    if variacao > 0.05:
+        texto_var = f"Em relação a {ano_ant}, houve <strong>melhora de {formatar_br(variacao)}</strong> na regularidade dos professores."
+    elif variacao < -0.05:
+        texto_var = f"Em relação a {ano_ant}, houve <strong>queda de {formatar_br(abs(variacao))}</strong> na regularidade dos professores. Este movimento merece atenção da gestão."
+    else:
+        texto_var = f"Em relação a {ano_ant}, a regularidade dos professores permaneceu <strong>estável</strong>."
+else:
+    variacao  = None
+    texto_var = "Não há ano anterior disponível para comparação."
+
+# ── Resultado sintético ───────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown(f"### {escola_sel}")
+st.caption(f"Código INEP: {co_esc} · {mun_sel} · {uf_sel} · {ano_ref}")
+
+col_ird, col_comp = st.columns([1, 2])
+
+with col_ird:
+    st.markdown(f"""
+    <div class="ird-destaque" style="background:{cor_bg}; border: 2px solid {cor_hex};">
+        <p class="ird-label" style="color:{cor_hex};">Regularidade dos professores (0 a 5)</p>
+        <p class="ird-numero" style="color:{cor_hex};">{formatar_br(ird)}</p>
+        <p class="ird-sit" style="color:{cor_hex};">● {situacao}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_comp:
+    st.markdown("**Comparação com referências**")
+    c1, c2 = st.columns(2)
+    c1.metric("Média nacional", formatar_br(media_ird_nac),
+              delta=f"{ird - media_ird_nac:+.3f}".replace(".", ",") if pd.notna(ird) else None,
+              delta_color="normal")
+    c2.metric(f"Média de {mun_sel}", formatar_br(media_ird_mun),
+              delta=f"{ird - media_ird_mun:+.3f}".replace(".", ",") if pd.notna(ird) and pd.notna(media_ird_mun) else None,
+              delta_color="normal")
+    st.markdown(f"<p style='font-size:0.95rem;'>{texto_sit}</p>", unsafe_allow_html=True)
+
+st.markdown(f"**Variação em relação ao ano anterior:** {texto_var}", unsafe_allow_html=True)
+
+# ── O que é o indicador de regularidade? ─────────────────────────────────────
+with st.expander("📌 O que é o indicador de regularidade dos professores?"):
+    st.markdown("""
+O **Indicador de Regularidade do Docente (IRD)** mede se os mesmos professores
+continuam na escola de um ano para o outro.
+
+**Como é calculado:** O Inep acompanha a presença de cada professor na escola
+ao longo dos últimos 5 anos. Professores que permanecem por mais tempo e de forma
+contínua recebem pontuação maior. O resultado é expresso numa escala de 0 a 5.
+
+| Valor | O que significa |
+|---|---|
+| 0 a 2 | Corpo docente muito instável — alta rotatividade |
+| 2 a 3 | Rotatividade moderada — merece atenção |
+| 3 a 4 | Regularidade satisfatória |
+| 4 a 5 | Corpo docente muito estável |
+
+**Por que importa para a gestão:** Quando os professores mudam com frequência,
+os alunos perdem a continuidade do acompanhamento pedagógico, a escola perde
+memória institucional e a gestão precisa investir mais tempo em integração e formação.
+""")
+
+# ── Outros indicadores ────────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown("### Indicadores associados")
+st.caption("Fatores que influenciam a regularidade dos professores")
+
+def card(titulo, valor, interpretacao):
+    st.markdown(f"""
+    <div class="card-ind">
+        <h5>{titulo}</h5>
+        <div class="valor">{valor}</div>
+        <div class="interp">{interpretacao}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+atu = linha.get("ATU", None)
+afd = linha.get("AFD", None)
+ied = linha.get("IED", None)
+icg = linha.get("ICG", None)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    atu_interp = ""
+    if pd.notna(atu):
+        if atu > media_atu_nac + 3:
+            atu_interp = "Acima da média nacional. Turmas numerosas aumentam a sobrecarga dos professores e podem contribuir para a rotatividade."
+        elif atu < media_atu_nac - 3:
+            atu_interp = "Abaixo da média nacional. Turmas menores favorecem o trabalho pedagógico e a permanência dos professores."
+        else:
+            atu_interp = f"Próximo à média nacional ({formatar_br(media_atu_nac, 1)} alunos/turma)."
+    card("Média de alunos por turma", formatar_br(atu, 1),
+         atu_interp or "Dados não disponíveis para este ano.")
+
+    afd_interp = ""
+    if pd.notna(afd):
+        if afd >= 70:
+            afd_interp = "A maioria dos professores leciona na área em que se formou. Isso favorece a qualidade do ensino e a satisfação profissional."
+        elif afd >= 40:
+            afd_interp = "Parte dos professores atua fora da sua área de formação. Pode indicar dificuldade de provimento de docentes qualificados."
+        else:
+            afd_interp = "Grande parte dos professores atua fora da sua área de formação. A gestão deve avaliar o quadro de lotação."
+    card("Professores com formação adequada (%)", formatar_br(afd, 1) + "%",
+         afd_interp or "Dados não disponíveis para este ano.")
+
+with col2:
+    ied_interp = ""
+    if pd.notna(ied):
+        if ied >= 50:
+            ied_interp = "Muitos professores trabalham em mais de uma escola ou turno. Isso pode reduzir o vínculo com a escola e aumentar a rotatividade."
+        elif ied >= 25:
+            ied_interp = "Parte dos professores tem jornada fragmentada entre escolas ou turnos."
+        else:
+            ied_interp = "A maioria dos professores concentra sua atuação nesta escola. Isso favorece o vínculo e a continuidade pedagógica."
+    card("Professores com jornada em mais de uma escola (%)", formatar_br(ied, 1) + "%",
+         ied_interp or "Dados não disponíveis para este ano.")
+
+    icg_interp = ""
+    if pd.notna(icg):
+        if icg >= 4:
+            icg_interp = "Escola de alta complexidade — oferece muitos turnos, etapas ou modalidades. Demanda maior esforço de coordenação pedagógica."
+        elif icg >= 2.5:
+            icg_interp = "Escola de complexidade intermediária."
+        else:
+            icg_interp = "Escola de menor complexidade — estrutura mais simples de gerir."
+    card("Complexidade da escola (1 a 6)", formatar_br(icg, 1),
+         icg_interp or "Dados não disponíveis para este ano.")
+
+# ── Evolução do IRD ───────────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown("### Evolução da regularidade dos professores")
+
+ird_nac = df_mun.groupby("ANO")["IRD"].mean().reset_index()
+ird_mun_serie = df_mun[df_mun["CO_MUNICIPIO"] == co_mun][["ANO","IRD"]].copy()
+
+fig = go.Figure()
+fig.add_trace(go.Scatter(
+    x=df_escola["ANO"], y=df_escola["IRD"],
+    name="Esta escola",
+    line=dict(color=cor_hex, width=3),
+    mode="lines+markers", marker_size=9
+))
+fig.add_trace(go.Scatter(
+    x=ird_nac["ANO"], y=ird_nac["IRD"],
+    name="Média Brasil",
+    line=dict(color="#aaa", dash="dash", width=1.5)
+))
+fig.add_trace(go.Scatter(
+    x=ird_mun_serie["ANO"], y=ird_mun_serie["IRD"],
+    name=f"Média {mun_sel}",
+    line=dict(color="#e67e22", dash="dot", width=1.5)
+))
+fig.update_layout(
+    height=380,
+    margin=dict(l=20, r=20, t=20, b=20),
+    legend=dict(orientation="h", y=-0.2),
+    yaxis=dict(title="Regularidade (0 a 5)", range=[0, 5.2]),
+    xaxis_title="Ano"
+)
+st.plotly_chart(fig, use_container_width=True)
+
+# ── Tabela de evolução ────────────────────────────────────────────────────────
+st.markdown("### Histórico de regularidade")
+
+df_tab = df_escola[["CO_ENTIDADE","ANO","IRD"]].copy()
+df_tab["Variação"] = df_tab["IRD"].diff()
+df_tab = df_tab.rename(columns={
+    "CO_ENTIDADE": "Código INEP",
+    "ANO": "Ano",
+    "IRD": "Regularidade (0-5)"
+})
+df_tab["Regularidade (0-5)"] = df_tab["Regularidade (0-5)"].apply(lambda x: formatar_br(x))
+df_tab["Variação"] = df_tab["Variação"].apply(lambda x: formatar_br(x) if pd.notna(x) else "—")
+st.dataframe(df_tab, use_container_width=True, hide_index=True)
+
+# ── Leitura gerencial final ───────────────────────────────────────────────────
+st.markdown("---")
+st.markdown("### Leitura gerencial")
+st.info("""
+Este painel transforma dados oficiais do Censo Escolar em informação de apoio à gestão.
+A regularidade dos professores é um sinal importante — mas não o único.
+A equipe gestora deve considerar também o contexto local, as condições de trabalho
+e as políticas de valorização docente ao planejar intervenções.
+""")
