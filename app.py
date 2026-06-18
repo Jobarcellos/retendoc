@@ -33,35 +33,43 @@ st.markdown("""
 st.markdown("""
 <div class="bloco-topo">
     <h1>📊 RegDoc — Regularidade Docente</h1>
-    <p>Instrumento de monitoramento da permanência docente nas redes municipais brasileiras · 2013–2025</p>
+    <p>Monitoramento da permanência dos professores nas redes municipais brasileiras · 2013–2025</p>
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("### Selecione uma análise no menu lateral:")
+st.markdown("### O que você quer analisar?")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     st.markdown("""
     <div class="card-nav">
         <h4>🗺️ Painel da Rede</h4>
-        <p>Visão nacional do IRD por UF e município.</p>
+        <p>Veja como está a regularidade dos professores em todo o Brasil ou no seu estado.</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col2:
     st.markdown("""
     <div class="card-nav">
-        <h4>🔍 Análise por Município</h4>
-        <p>Evolução temporal e comparação com médias nacionais.</p>
+        <h4>🔍 Município</h4>
+        <p>Acompanhe a evolução de um município específico e compare com as médias nacionais.</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
     st.markdown("""
     <div class="card-nav">
-        <h4>⚠️ Ranking de Atenção</h4>
-        <p>Municípios priorizados por risco à regularidade docente.</p>
+        <h4>⚠️ Ranking</h4>
+        <p>Identifique quais municípios precisam de atenção prioritária da gestão.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    st.markdown("""
+    <div class="card-nav">
+        <h4>🏫 Escola</h4>
+        <p>Consulte a situação de uma escola específica com histórico e comparações.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -69,8 +77,8 @@ st.markdown("---")
 st.markdown("""
 **Sobre o RegDoc**
 
-Instrumento de pesquisa sobre determinantes da regularidade docente (2013–2025).
-Dados: Censo Escolar/Inep. Modelo: regressão com efeitos fixos, painel de 5.570 municípios.
+O RegDoc transforma dados oficiais do Censo Escolar (Inep) em informação de apoio
+à gestão educacional. Os indicadores cobrem 5.570 municípios brasileiros de 2013 a 2025.
 
-Preditor mais robusto: **ATU** (β = −0,0085; p < 0,001).
+Use o menu lateral para navegar entre as análises.
 """)
