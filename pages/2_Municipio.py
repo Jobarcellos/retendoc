@@ -10,6 +10,23 @@ from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global
 st.set_page_config(page_title="Município · RegDoc", layout="wide")
 
 aplicar_estilo_global()
+
+st.markdown("""
+<style>
+.tooltip-wrap { position:relative; display:inline-block; cursor:pointer; }
+.tooltip-wrap .tip {
+    visibility:hidden; opacity:0; width:280px; background:#1a3a5c; color:white;
+    font-size:12px; line-height:1.5; border-radius:8px; padding:10px 14px;
+    position:absolute; z-index:999; bottom:130%; left:50%; transform:translateX(-50%);
+    transition:opacity 0.2s; pointer-events:none;
+}
+.tooltip-wrap:hover .tip { visibility:visible; opacity:1; }
+.info-icon { display:inline-flex; align-items:center; justify-content:center;
+    width:16px; height:16px; border-radius:50%; background:#1a3a5c;
+    color:white; font-size:10px; font-weight:bold; cursor:help; }
+</style>
+""", unsafe_allow_html=True)
+
 st.title("🔍 Análise por Município")
 st.caption("Evolução da regularidade dos professores e comparação com médias nacionais e estaduais")
 
@@ -92,7 +109,13 @@ with col_ird:
     st.markdown(f"""
     <div style="background:{cor}22; border:2px solid {cor}; border-radius:12px;
          padding:1.5rem 2rem; text-align:center;">
-        <p style="color:{cor}; margin:0; font-size:1rem;">Regularidade dos professores (0 a 5)</p>
+        <p style="color:{cor}; margin:0; font-size:1rem;">
+            Regularidade dos professores (0 a 5)
+            <span class="tooltip-wrap">
+                <span class="info-icon" style="background:{cor};">i</span>
+                <span class="tip" style="color:white;">O IRD mede se os mesmos professores continuam na escola de um ano para o outro. Calculado pelo Inep a partir do Censo Escolar, observando a presença de cada professor nos últimos 5 anos. Escala de 0 a 5 — quanto maior, mais estável é o corpo docente.</span>
+            </span>
+        </p>
         <p style="color:{cor}; margin:0; font-size:3.5rem; font-weight:bold;">{formatar_br(ird)}</p>
         <p style="color:{cor}; margin:0; font-size:1.2rem; font-weight:bold;">● {situacao}</p>
     </div>
