@@ -5,10 +5,11 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
-from utils.dados import carregar_municipal, formatar_br
+from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global
 
 st.set_page_config(page_title="Município · RegDoc", layout="wide")
 
+aplicar_estilo_global()
 st.title("🔍 Análise por Município")
 st.caption("Evolução da regularidade dos professores e comparação com médias nacionais e estaduais")
 
