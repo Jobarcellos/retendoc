@@ -144,7 +144,13 @@ col_ird, col_comp = st.columns([1, 2])
 with col_ird:
     st.markdown(f"""
     <div class="ird-destaque" style="background:{cor_bg}; border:2px solid {cor_hex};">
-        <p style="color:{cor_hex}; margin:0; font-size:1rem;">Regularidade dos professores (0 a 5)</p>
+        <p style="color:{cor_hex}; margin:0; font-size:1rem;">
+            Regularidade dos professores (0 a 5)
+            <span class="tooltip-wrap">
+                <span class="info-icon" style="background:{cor_hex};">i</span>
+                <span class="tip">O IRD mede se os mesmos professores continuam na escola de um ano para o outro. Calculado pelo Inep a partir do Censo Escolar, observando a presença de cada professor nos últimos 5 anos. Escala de 0 a 5 — quanto maior, mais estável é o corpo docente.</span>
+            </span>
+        </p>
         <p style="color:{cor_hex}; margin:0; font-size:3.5rem; font-weight:bold;">{formatar_br(ird)}</p>
         <p style="color:{cor_hex}; margin:0; font-size:1.2rem; font-weight:bold;">● {situacao}</p>
     </div>""", unsafe_allow_html=True)
