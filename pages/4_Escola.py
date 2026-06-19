@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
-from utils.dados import carregar_escola, carregar_municipal, formatar_br
+from utils.dados import carregar_escola, carregar_municipal, formatar_br, aplicar_estilo_global
 
 st.set_page_config(page_title="Escola · RegDoc", layout="wide")
 
@@ -53,6 +53,7 @@ def card_com_tooltip(titulo, sigla, valor, interp):
         <div class="interp">{interp}</div>
     </div>""", unsafe_allow_html=True)
 
+aplicar_estilo_global()
 st.title("🏫 Consulta por Escola")
 st.caption("Regularidade dos professores e indicadores educacionais por escola")
 
