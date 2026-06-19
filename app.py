@@ -9,24 +9,49 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    .bloco-topo {
-        background: #1a3a5c;
-        color: white;
-        padding: 2rem 2.5rem 1.5rem 2.5rem;
-        border-radius: 10px;
-        margin-bottom: 1.5rem;
+    [data-testid="stSidebarNav"] li {
+        padding: 0.3rem 0;
     }
-    .bloco-topo h1 { color: white; margin: 0; font-size: 2rem; }
-    .bloco-topo p  { color: #b8cfe8; margin: 0.4rem 0 0 0; font-size: 1rem; }
+    [data-testid="stSidebarNav"] a {
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    .bloco-topo {
+        background: linear-gradient(135deg, #1a3a5c 0%, #2e6da4 100%);
+        color: white;
+        padding: 2.5rem 3rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+    .bloco-topo h1 { color: white; margin: 0; font-size: 2.2rem; }
+    .bloco-topo p  { color: #b8cfe8; margin: 0.5rem 0 0 0; font-size: 1.05rem; }
     .card-nav {
         border: 1px solid #dde4ed;
-        border-radius: 8px;
-        padding: 1.2rem 1.4rem;
-        margin-bottom: 0.8rem;
+        border-radius: 10px;
+        padding: 1.4rem 1.6rem;
         background: #f7f9fc;
+        height: 100%;
+        transition: box-shadow 0.2s;
     }
-    .card-nav h4 { margin: 0 0 0.3rem 0; color: #1a3a5c; }
-    .card-nav p  { margin: 0; color: #555; font-size: 0.9rem; }
+    .card-nav:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .card-nav h4 { margin: 0 0 0.5rem 0; color: #1a3a5c; font-size: 1.05rem; }
+    .card-nav p  { margin: 0; color: #555; font-size: 0.9rem; line-height: 1.5; }
+    .numero-destaque {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #1a3a5c;
+        margin: 0;
+    }
+    .numero-label {
+        font-size: 0.8rem;
+        color: #777;
+        margin: 0;
+    }
+    .bloco-numero {
+        text-align: center;
+        padding: 1rem;
+        border-right: 1px solid #eee;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -37,7 +62,39 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("### O que você quer analisar?")
+# Números de impacto
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.markdown("""
+    <div style="text-align:center; padding:1rem; border-right:1px solid #eee;">
+        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c; margin:0;">5.570</p>
+        <p style="font-size:0.85rem; color:#777; margin:0;">municípios monitorados</p>
+    </div>
+    """, unsafe_allow_html=True)
+with col2:
+    st.markdown("""
+    <div style="text-align:center; padding:1rem; border-right:1px solid #eee;">
+        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c; margin:0;">209 mil</p>
+        <p style="font-size:0.85rem; color:#777; margin:0;">escolas acompanhadas</p>
+    </div>
+    """, unsafe_allow_html=True)
+with col3:
+    st.markdown("""
+    <div style="text-align:center; padding:1rem; border-right:1px solid #eee;">
+        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c; margin:0;">13 anos</p>
+        <p style="font-size:0.85rem; color:#777; margin:0;">de série histórica</p>
+    </div>
+    """, unsafe_allow_html=True)
+with col4:
+    st.markdown("""
+    <div style="text-align:center; padding:1rem;">
+        <p style="font-size:2rem; font-weight:bold; color:#c0392b; margin:0;">622</p>
+        <p style="font-size:0.85rem; color:#777; margin:0;">municípios em alerta (2024)</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("---")
+st.markdown("### Selecione o que você quer analisar")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -45,40 +102,44 @@ with col1:
     st.markdown("""
     <div class="card-nav">
         <h4>🗺️ Painel da Rede</h4>
-        <p>Veja como está a regularidade dos professores em todo o Brasil ou no seu estado.</p>
+        <p>Veja como está a regularidade dos professores em todo o Brasil ou no seu estado. Compare estados e acompanhe a evolução ao longo dos anos.</p>
     </div>
     """, unsafe_allow_html=True)
+    st.page_link("pages/1_Painel_da_Rede.py", label="Acessar →")
 
 with col2:
     st.markdown("""
     <div class="card-nav">
         <h4>🔍 Município</h4>
-        <p>Acompanhe a evolução de um município específico e compare com as médias nacionais.</p>
+        <p>Acompanhe a evolução de um município específico e compare com as médias nacionais e estaduais.</p>
     </div>
     """, unsafe_allow_html=True)
+    st.page_link("pages/2_Municipio.py", label="Acessar →")
 
 with col3:
     st.markdown("""
     <div class="card-nav">
         <h4>⚠️ Ranking</h4>
-        <p>Identifique quais municípios precisam de atenção prioritária da gestão.</p>
+        <p>Identifique quais municípios precisam de atenção prioritária. Filtre por estado e baixe a lista completa.</p>
     </div>
     """, unsafe_allow_html=True)
+    st.page_link("pages/3_Ranking.py", label="Acessar →")
 
 with col4:
     st.markdown("""
     <div class="card-nav">
         <h4>🏫 Escola</h4>
-        <p>Consulte a situação de uma escola específica com histórico e comparações.</p>
+        <p>Consulte a situação de uma escola específica com histórico completo, comparações e classificação de risco.</p>
     </div>
     """, unsafe_allow_html=True)
+    st.page_link("pages/4_Escola.py", label="Acessar →")
 
 st.markdown("---")
 st.markdown("""
 **Sobre o RegDoc**
 
-O RegDoc transforma dados oficiais do Censo Escolar (Inep) em informação de apoio
-à gestão educacional. Os indicadores cobrem 5.570 municípios brasileiros de 2013 a 2025.
-
-Use o menu lateral para navegar entre as análises.
+O RegDoc transforma dados oficiais do Censo Escolar (Inep) em informação de apoio à gestão educacional.
+Os dados cobrem 5.570 municípios brasileiros de 2013 a 2025.
+A regularidade dos professores é medida pelo Indicador de Regularidade do Docente (IRD),
+numa escala de 0 a 5 — quanto maior, mais estável é o corpo docente da escola ou município.
 """)
