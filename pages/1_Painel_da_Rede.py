@@ -4,10 +4,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from utils.dados import carregar_municipal, formatar_br
+from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global
 
 st.set_page_config(page_title="Painel da Rede · RegDoc", layout="wide")
 
+aplicar_estilo_global()
 st.title("🗺️ Painel da Rede Nacional")
 st.caption("Visão geral da regularidade dos professores por estado e município · 2013–2025")
 
