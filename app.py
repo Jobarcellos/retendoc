@@ -165,3 +165,10 @@ Os dados cobrem 5.570 municípios brasileiros de 2013 a 2025.
 A regularidade dos professores é medida pelo Indicador de Regularidade do Docente (IRD),
 numa escala de 0 a 5 — quanto maior, mais estável é o corpo docente da escola ou município.
 """)
+
+st.set_page_config(
+    page_title="RegDoc — Regularidade Docente",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
