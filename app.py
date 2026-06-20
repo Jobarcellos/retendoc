@@ -211,27 +211,27 @@ with col_c:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # --- Sobre os dados ---
-with st.expander("ℹ️ Sobre o RegDoc e os dados utilizados"):
-    st.markdown("""
-    O **RegDoc** transforma dados oficiais do Censo Escolar (INEP/MEC) em diagnóstico
-    acionável para secretarias de educação. Cobre **5.570 municípios** brasileiros
-    com série histórica de **2013 a 2025** (13 anos).
+st.markdown("#### ℹ️ Sobre o RegDoc e os dados utilizados")
 
-    **O que é o IRD?**
-    O Indicador de Regularidade do Docente mede a permanência dos professores
-    nas mesmas escolas ao longo de 5 anos consecutivos. Varia de 0 a 5:
-    quanto maior, mais estável é o corpo docente.
+st.markdown("""
+O **RegDoc** transforma dados oficiais do Censo Escolar (INEP/MEC) em diagnóstico
+acionável para secretarias de educação. Cobre **5.570 municípios** brasileiros
+com série histórica de **2013 a 2025** (13 anos).
 
-    | Faixa | Classificação |
-    |-------|--------------|
-    | 0 a 1,9 | 🔴 Baixa regularidade |
-    | 2,0 a 2,9 | 🟠 Média-baixa |
-    | 3,0 a 3,9 | 🟡 Média-alta |
-    | 4,0 a 5,0 | 🟢 Alta regularidade |
+**O que é o IRD?**
+O Indicador de Regularidade do Docente mede a permanência dos professores
+nas mesmas escolas ao longo de 5 anos consecutivos. Varia de 0 a 5:
+quanto maior, mais estável é o corpo docente.
 
-    **Fonte:** Censo Escolar da Educação Básica — INEP/MEC.
-    Nota Técnica nº 11/2015 e atualizações anuais.
-    Dados públicos, uso gratuito e irrestrito.
-    """)
+| Faixa | Classificação |
+|-------|--------------|
+| 0 a 1,9 | 🔴 Baixa regularidade |
+| 2,0 a 2,9 | 🟠 Média-baixa |
+| 3,0 a 3,9 | 🟡 Média-alta |
+| 4,0 a 5,0 | 🟢 Alta regularidade |
 
+**Fonte:** Censo Escolar da Educação Básica — INEP/MEC.
+Nota Técnica nº 11/2015 e atualizações anuais.
+Dados públicos, uso gratuito e irrestrito.
+""")
 
