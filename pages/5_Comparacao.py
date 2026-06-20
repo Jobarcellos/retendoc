@@ -406,8 +406,6 @@ st.download_button(
 
 # ── Nota metodológica ──────────────────────────────────────────────────────────
 st.markdown("---")
-# ── Cruzamento IRD × Saeb ─────────────────────────────────────────────────────
-render_cruzamento_saeb(dados_comp, df_esc)
 
 with st.expander("ℹ️ Como interpretar a comparação"):
     st.markdown("""
@@ -537,3 +535,5 @@ def render_cruzamento_saeb(dados_comp, df_esc):
         "Use como dado contextual, não como evidência de causalidade. "
         "Fonte: Microdados Saeb 2019, 2021 e 2023 — INEP/MEC."
     )
+# ── Cruzamento IRD × Saeb ─────────────────────────────────────────────────────
+render_cruzamento_saeb(dados_comp, df_esc)
