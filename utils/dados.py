@@ -69,7 +69,11 @@ def carregar_escola():
     df["SG_UF"] = df["SG_UF"].fillna("??")
     df["NO_ENTIDADE"] = df["NO_ENTIDADE"].fillna("Escola não identificada")
     return df
-
+@st.cache_data
+def carregar_saeb():
+    df = pd.read_parquet("saeb_escola_consolidado.parquet")
+    df["CO_ENTIDADE"] = df["CO_ENTIDADE"].astype(str).str.replace(r"\.0$", "", regex=True)
+    return df
 
 def classificar_risco(ird, media_nacional):
     if pd.isna(ird) or pd.isna(media_nacional):
