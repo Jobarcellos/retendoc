@@ -228,9 +228,9 @@ else:
     ]
 
 hist = df_mun[df_mun["ANO"] <= ano_ref].sort_values("ANO")
-if len(hist) >= 1:
-    variacao = hist["IRD"].iloc[-1] - hist["IRD"].iloc[-1]
-    ano_ant  = int(hist["ANO"].iloc[-1])
+if len(hist) >= 2:
+    variacao = hist["IRD"].iloc[-1] - hist["IRD"].iloc[-2]
+    ano_ant  = int(hist["ANO"].iloc[-2])
     texto_var = (f"Em relação a {ano_ant}, houve melhora de {formatar_br(variacao)}." if variacao > 0.05
         else f"Em relação a {ano_ant}, houve queda de {formatar_br(abs(variacao))}. Merece atenção." if variacao < -0.05
         else f"Em relação a {ano_ant}, a regularidade permaneceu estável.")
