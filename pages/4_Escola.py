@@ -213,19 +213,22 @@ def classificar_tendencia(df_escola, ano_ref):
 def render_tendencia(tendencia):
     if tendencia is None:
         return
-    st.markdown(f"""
-    <div class="tendencia-box"
-         style="background:{tendencia['cor_fundo']}; border-left:4px solid {tendencia['cor_borda']};">
-        <span style="font-size:1.3rem;">{tendencia['icone']}</span>
-        <div>
-            <strong style="color:{tendencia['cor_borda']};">Tendência histórica</strong><br>
-            <span style="color:#333;">{tendencia['texto']}</span>
-            {"<br><span style='color:#c0392b; font-size:0.85rem;'>⚠️ Ruptura detectada em "
-             + str(tendencia['ano_ruptura'])
-             + ": queda brusca neste ano. Verificar causa.</span>"
-             if tendencia.get('ruptura') else ""}
-        </div>
-    </div>""", unsafe_allow_html=True)
+    ruptura_html = ""
+    if tendencia.get("ruptura"):
+        ruptura_html = (
+            f"<br><span style='color:#c0392b; font-size:0.85rem;'>"
+            f"⚠️ Ruptura detectada em {tendencia['ano_ruptura']}: "
+            f"queda brusca neste ano. Verificar causa.</span>"
+        )
+    st.markdown(
+        f"<div class='tendencia-box' style='background:{tendencia['cor_fundo']}; "
+        f"border-left:4px solid {tendencia['cor_borda']};'>"
+        f"<span style='font-size:1.3rem;'>{tendencia['icone']}</span>"
+        f"<div><strong style='color:{tendencia['cor_borda']};'>Tendência histórica</strong>"
+        f"<br><span style='color:#333;'>{tendencia['texto']}</span>"
+        f"{ruptura_html}</div></div>",
+        unsafe_allow_html=True
+    )
 
 
 # ── Início da página ───────────────────────────────────────────────────────────
