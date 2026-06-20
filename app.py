@@ -157,6 +157,15 @@ with col4:
     </div>""", unsafe_allow_html=True)
     st.page_link("pages/4_Escola.py", label="Acessar →")
 
+col1b, col2b, col3b = st.columns([1,1,2])
+with col1b:
+    st.markdown("""
+    <div class="card-nav">
+        <h4>📊 Comparação</h4>
+        <p>Compare até 5 escolas lado a lado com gráfico radar e ranking por município.</p>
+    </div>""", unsafe_allow_html=True)
+    st.page_link("pages/5_Comparacao.py", label="Acessar →")
+
 # ── Por que monitorar ──────────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown("### Por que monitorar a permanência dos professores?")
