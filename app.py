@@ -1,12 +1,24 @@
 import streamlit as st
-
+import streamlit as st
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from utils.dados import carregar_municipal
 st.set_page_config(
     page_title="RegDoc — Regularidade Docente",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+@st.cache_data
+def _dados_home():
+    df = carregar_municipal()
+    ano_max = int(df["ANO"].max())
+    df_ano  = df[df["ANO"] == ano_max].copy()
+    media   = df_ano["IRD"].mean()
+    alerta  = int((df_ano["IRD"] < media * 0.85).sum())
+    return ano_max, alerta
 
+ano_atual, n_alerta = _dados_home()
 st.markdown("""
 <style>
     /* Menu lateral — fundo azul escuro */
@@ -114,10 +126,10 @@ with col3:
         <p style="font-size:0.85rem; color:#777; margin:0;">de série histórica</p>
     </div>""", unsafe_allow_html=True)
 with col4:
-    st.markdown("""
+    st.markdown(f"""
     <div style="text-align:center; padding:1rem;">
-        <p style="font-size:2rem; font-weight:bold; color:#c0392b; margin:0;">622</p>
-        <p style="font-size:0.85rem; color:#777; margin:0;">municípios em alerta (2024)</p>
+        <p style="font-size:2rem; font-weight:bold; color:#c0392b; margin:0;">{n_alerta}</p>
+        <p style="font-size:0.85rem; color:#777; margin:0;">municípios em alerta ({ano_atual})</p>
     </div>""", unsafe_allow_html=True)
 
 st.markdown("---")
