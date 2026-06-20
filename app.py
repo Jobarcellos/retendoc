@@ -157,13 +157,81 @@ with col4:
     st.page_link("pages/4_Escola.py", label="Acessar →")
 
 st.markdown("---")
-st.markdown("""
-**Sobre o RegDoc**
 
-O RegDoc transforma dados oficiais do Censo Escolar (Inep) em informação de apoio à gestão educacional.
-Os dados cobrem 5.570 municípios brasileiros de 2013 a 2025.
-A regularidade dos professores é medida pelo Indicador de Regularidade do Docente (IRD),
-numa escala de 0 a 5 — quanto maior, mais estável é o corpo docente da escola ou município.
-""")
+# --- Por que monitorar ---
+st.markdown("### Por que monitorar a permanência dos professores?")
+
+col_a, col_b, col_c = st.columns(3)
+
+with col_a:
+    st.markdown("""
+    <div style="background:#f0f7ff; border-left:4px solid #2e6da4;
+                padding:1.2rem 1.4rem; border-radius:0 8px 8px 0; height:100%;">
+        <p style="font-size:1.6rem; font-weight:700; color:#1a3a5c; margin:0;">📚</p>
+        <p style="font-weight:600; color:#1a3a5c; margin:0.4rem 0 0.3rem 0;">
+            Continuidade pedagógica
+        </p>
+        <p style="font-size:0.88rem; color:#555; margin:0; line-height:1.5;">
+            Quando o mesmo professor fica na escola por anos consecutivos,
+            ele conhece os alunos, o contexto e a comunidade. O projeto
+            pedagógico se fortalece — não recomeça do zero a cada ano.
+        </p>
+    </div>""", unsafe_allow_html=True)
+
+with col_b:
+    st.markdown("""
+    <div style="background:#fff8f0; border-left:4px solid #e67e22;
+                padding:1.2rem 1.4rem; border-radius:0 8px 8px 0; height:100%;">
+        <p style="font-size:1.6rem; font-weight:700; color:#1a3a5c; margin:0;">📉</p>
+        <p style="font-weight:600; color:#1a3a5c; margin:0.4rem 0 0.3rem 0;">
+            Impacto silencioso nos resultados
+        </p>
+        <p style="font-size:0.88rem; color:#555; margin:0; line-height:1.5;">
+            Redes com alta rotatividade docente enfrentam queda de desempenho
+            nos alunos que se acumula ao longo dos anos — mas raramente aparece
+            no relatório anual da secretaria.
+        </p>
+    </div>""", unsafe_allow_html=True)
+
+with col_c:
+    st.markdown("""
+    <div style="background:#f0fff4; border-left:4px solid #27ae60;
+                padding:1.2rem 1.4rem; border-radius:0 8px 8px 0; height:100%;">
+        <p style="font-size:1.6rem; font-weight:700; color:#1a3a5c; margin:0;">🎯</p>
+        <p style="font-weight:600; color:#1a3a5c; margin:0.4rem 0 0.3rem 0;">
+            Dado público, decisão mais informada
+        </p>
+        <p style="font-size:0.88rem; color:#555; margin:0; line-height:1.5;">
+            O IRD existe desde 2013 e está disponível para cada escola do país.
+            O RegDoc organiza, contextualiza e orienta — para que o gestor
+            saiba onde agir e o que fazer.
+        </p>
+    </div>""", unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# --- Sobre os dados ---
+with st.expander("ℹ️ Sobre o RegDoc e os dados utilizados"):
+    st.markdown("""
+    O **RegDoc** transforma dados oficiais do Censo Escolar (INEP/MEC) em diagnóstico
+    acionável para secretarias de educação. Cobre **5.570 municípios** brasileiros
+    com série histórica de **2013 a 2025** (13 anos).
+
+    **O que é o IRD?**
+    O Indicador de Regularidade do Docente mede a permanência dos professores
+    nas mesmas escolas ao longo de 5 anos consecutivos. Varia de 0 a 5:
+    quanto maior, mais estável é o corpo docente.
+
+    | Faixa | Classificação |
+    |-------|--------------|
+    | 0 a 1,9 | 🔴 Baixa regularidade |
+    | 2,0 a 2,9 | 🟠 Média-baixa |
+    | 3,0 a 3,9 | 🟡 Média-alta |
+    | 4,0 a 5,0 | 🟢 Alta regularidade |
+
+    **Fonte:** Censo Escolar da Educação Básica — INEP/MEC.
+    Nota Técnica nº 11/2015 e atualizações anuais.
+    Dados públicos, uso gratuito e irrestrito.
+    """)
 
 
