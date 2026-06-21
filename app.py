@@ -127,7 +127,8 @@ with col4:
 st.markdown("---")
 st.markdown("### Selecione o que você quer analisar")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
+
 with col1:
     st.markdown("""
     <div class="card-nav">
@@ -135,13 +136,15 @@ with col1:
         <p>Veja como está a regularidade dos professores em todo o Brasil ou no seu estado. Compare estados e acompanhe a evolução ao longo dos anos.</p>
     </div>""", unsafe_allow_html=True)
     st.page_link("pages/1_Painel_da_Rede.py", label="Acessar →")
+
 with col2:
     st.markdown("""
     <div class="card-nav">
         <h4>🔍 Município</h4>
-        <p>Acompanhe a evolução de um município específico e compare com as médias nacionais e estaduais.</p>
+        <p>Acompanhe a evolução de um município e compare com médias nacionais e estaduais. Veja também o ranking de todas as escolas da rede.</p>
     </div>""", unsafe_allow_html=True)
     st.page_link("pages/2_Municipio.py", label="Acessar →")
+
 with col3:
     st.markdown("""
     <div class="card-nav">
@@ -149,20 +152,20 @@ with col3:
         <p>Identifique quais municípios precisam de atenção prioritária. Filtre por estado e baixe a lista completa.</p>
     </div>""", unsafe_allow_html=True)
     st.page_link("pages/3_Ranking.py", label="Acessar →")
+
 with col4:
     st.markdown("""
     <div class="card-nav">
         <h4>🏫 Escola</h4>
-        <p>Consulte a situação de uma escola específica com histórico completo, comparações e classificação de risco.</p>
+        <p>Consulte a situação de uma escola específica com histórico completo, comparações, tendência e orientações por perfil.</p>
     </div>""", unsafe_allow_html=True)
     st.page_link("pages/4_Escola.py", label="Acessar →")
 
-col1b, col2b, col3b = st.columns([1,1,2])
-with col1b:
+with col5:
     st.markdown("""
     <div class="card-nav">
         <h4>📊 Comparação</h4>
-        <p>Compare até 20 escolas — gráfico radar para grupos de até 5, tabela interativa para grupos maiores. Compare também até 10 municípios com evolução histórica comparada.</p>
+        <p>Compare até 20 escolas ou até 10 municípios com evolução histórica. Gráfico radar para grupos pequenos, tabela interativa para grupos maiores.</p>
     </div>""", unsafe_allow_html=True)
     st.page_link("pages/5_Comparacao.py", label="Acessar →")
 
