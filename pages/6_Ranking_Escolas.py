@@ -200,7 +200,11 @@ cm2.metric(
 # RANKING
 # ─────────────────────────────────────────────
 st.markdown("---")
-n_top = st.slider("Escolas no ranking", 10, min(100, total), min(30, total))
+if total <= 10:
+    n_top = total
+    st.caption(f"Exibindo todas as {total} escolas do município.")
+else:
+    n_top = st.slider("Escolas no ranking", 10, min(100, total), min(30, total))
 st.markdown(f"### Top {n_top} escolas — menor regularidade dos professores")
 st.markdown(
     f"Classificação: "
