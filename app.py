@@ -162,7 +162,7 @@ with col1b:
     st.markdown("""
     <div class="card-nav">
         <h4>📊 Comparação</h4>
-        <p>Compare até 20 escolas com gráfico radar ou tabela interativa, e até 10 municípios com evolução histórica comparada.</p>
+        <p>Compare até 20 escolas — gráfico radar para grupos de até 5, tabela interativa para grupos maiores. Compare também até 10 municípios com evolução histórica comparada.</p>
     </div>""", unsafe_allow_html=True)
     st.page_link("pages/5_Comparacao.py", label="Acessar →")
 
