@@ -31,10 +31,13 @@ st.markdown("""
     color:white; font-size:10px; font-weight:bold; cursor:help; }
 .tendencia-box { border-radius:8px; padding:0.8rem 1.2rem; margin:0.5rem 0 1rem 0;
     font-size:0.9rem; display:flex; align-items:flex-start; gap:0.8rem; }
+.perfil-tag { display:inline-block; background:#1a3a5c; color:white;
+    font-size:0.78rem; font-weight:600; padding:3px 10px; border-radius:20px;
+    margin-bottom:0.6rem; letter-spacing:0.03em; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Tooltips enriquecidos ──────────────────────────────────────────────────────
+# ── Tooltips ───────────────────────────────────────────────────────────────────
 TOOLTIPS = {
     "IRD": (
         "O IRD — Indicador de Regularidade do Docente — mede se os mesmos professores "
@@ -122,30 +125,18 @@ def card_com_tooltip(titulo, sigla, valor, interp):
     </div>""", unsafe_allow_html=True)
 
 
-# ── Sinalização de tendência ───────────────────────────────────────────────────
+# ── Tendência histórica ────────────────────────────────────────────────────────
 def classificar_tendencia(df_escola, ano_ref):
-    """
-    Analisa os últimos anos da série e retorna diagnóstico de tendência.
-    Usa até 5 anos anteriores ao ano de referência.
-    """
     hist = df_escola[df_escola["ANO"] <= ano_ref].sort_values("ANO").dropna(subset=["IRD"])
-
     if len(hist) < 3:
         return None
-
-    anos   = hist["ANO"].values
+    anos    = hist["ANO"].values
     valores = hist["IRD"].values
-
-    # Regressão linear simples
-    x = anos.astype(float)
-    slope = np.polyfit(x - x.mean(), valores, 1)[0]
-
+    x       = anos.astype(float)
+    slope   = np.polyfit(x - x.mean(), valores, 1)[0]
     ultimo  = valores[-1]
-    primeiro = valores[0]
-    variacao = ultimo - primeiro
-    n_anos   = len(anos)
+    variacao = ultimo - valores[0]
 
-    # Detectar ruptura: queda >= 0,5 em um único ano
     ruptura = False
     ano_ruptura = None
     for i in range(1, len(anos)):
@@ -155,59 +146,34 @@ def classificar_tendencia(df_escola, ano_ref):
             break
 
     if slope <= -0.15:
-        return {
-            "icone": "📉",
-            "cor_fundo": "#fdedec",
-            "cor_borda": "#c0392b",
-            "texto": f"Em queda acelerada — perdeu {abs(variacao):.2f} pontos desde {int(anos[0])} "
-                     f"({slope:.2f} pts/ano em média). Requer ação imediata.",
-            "ruptura": ruptura,
-            "ano_ruptura": ano_ruptura,
-        }
+        return {"icone": "📉", "cor_fundo": "#fdedec", "cor_borda": "#c0392b",
+                "texto": f"Em queda acelerada — perdeu {abs(variacao):.2f} pontos desde {int(anos[0])} "
+                         f"({slope:.2f} pts/ano em média). Requer ação imediata.",
+                "ruptura": ruptura, "ano_ruptura": ano_ruptura}
     elif slope <= -0.05:
-        return {
-            "icone": "↘️",
-            "cor_fundo": "#fef9e7",
-            "cor_borda": "#f39c12",
-            "texto": f"Tendência de queda desde {int(anos[0])} "
-                     f"({variacao:+.2f} pontos acumulados). "
-                     "Monitorar com atenção — se mantida, atingirá nível crítico.",
-            "ruptura": ruptura,
-            "ano_ruptura": ano_ruptura,
-        }
+        return {"icone": "↘️", "cor_fundo": "#fef9e7", "cor_borda": "#f39c12",
+                "texto": f"Tendência de queda desde {int(anos[0])} "
+                         f"({variacao:+.2f} pontos acumulados). "
+                         "Monitorar com atenção — se mantida, atingirá nível crítico.",
+                "ruptura": ruptura, "ano_ruptura": ano_ruptura}
     elif slope < 0.05:
-        return {
-            "icone": "➡️",
-            "cor_fundo": "#f0f4f8",
-            "cor_borda": "#7f8c8d",
-            "texto": f"Estável desde {int(anos[0])} (variação de {variacao:+.2f} pontos). "
-                     + ("Estabilidade positiva — IRD em nível satisfatório." if ultimo >= 3.0
-                        else "Estabilidade preocupante — IRD estagnado abaixo de 3,0."),
-            "ruptura": ruptura,
-            "ano_ruptura": ano_ruptura,
-        }
+        return {"icone": "➡️", "cor_fundo": "#f0f4f8", "cor_borda": "#7f8c8d",
+                "texto": f"Estável desde {int(anos[0])} (variação de {variacao:+.2f} pontos). "
+                         + ("Estabilidade positiva — IRD em nível satisfatório." if ultimo >= 3.0
+                            else "Estabilidade preocupante — IRD estagnado abaixo de 3,0."),
+                "ruptura": ruptura, "ano_ruptura": ano_ruptura}
     elif slope < 0.15:
-        return {
-            "icone": "↗️",
-            "cor_fundo": "#eafaf1",
-            "cor_borda": "#27ae60",
-            "texto": f"Em recuperação desde {int(anos[0])} "
-                     f"(+{variacao:.2f} pontos acumulados). "
-                     "Ações de retenção docente parecem estar surtindo efeito.",
-            "ruptura": False,
-            "ano_ruptura": None,
-        }
+        return {"icone": "↗️", "cor_fundo": "#eafaf1", "cor_borda": "#27ae60",
+                "texto": f"Em recuperação desde {int(anos[0])} "
+                         f"(+{variacao:.2f} pontos acumulados). "
+                         "Ações de retenção docente parecem estar surtindo efeito.",
+                "ruptura": False, "ano_ruptura": None}
     else:
-        return {
-            "icone": "📈",
-            "cor_fundo": "#eafaf1",
-            "cor_borda": "#27ae60",
-            "texto": f"Melhora expressiva desde {int(anos[0])} "
-                     f"(+{variacao:.2f} pontos, média de +{slope:.2f} pts/ano). "
-                     "Documentar as práticas que estão gerando esse resultado.",
-            "ruptura": False,
-            "ano_ruptura": None,
-        }
+        return {"icone": "📈", "cor_fundo": "#eafaf1", "cor_borda": "#27ae60",
+                "texto": f"Melhora expressiva desde {int(anos[0])} "
+                         f"(+{variacao:.2f} pontos, média de +{slope:.2f} pts/ano). "
+                         "Documentar as práticas que estão gerando esse resultado.",
+                "ruptura": False, "ano_ruptura": None}
 
 
 def render_tendencia(tendencia):
@@ -229,6 +195,240 @@ def render_tendencia(tendencia):
         f"{ruptura_html}</div></div>",
         unsafe_allow_html=True
     )
+
+
+# ── Prescrição por perfil (IRD × ICG × Localização) ───────────────────────────
+def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
+    """
+    Retorna (label_perfil, lista_orientacoes).
+    ird_faixa : "alerta" | "atencao" | "favoravel"
+    icg       : valor numérico (float) do indicador de complexidade
+    localizacao: valor da coluna TP_LOCALIZACAO (1=urbana, 2=rural)
+                 ou strings "Urbana"/"Rural"/"URBANA"/"RURAL"
+    """
+    icg_nivel = "alta" if pd.notna(icg) and float(icg) >= 4 else "baixa"
+    loc_str   = str(localizacao).strip()
+    loc       = "rural" if loc_str in ["2", "Rural", "RURAL", "rural"] else "urbana"
+
+    perfis = {
+
+        # ══ ALERTA ════════════════════════════════════════════════════════════
+        ("alerta", "alta", "urbana"): (
+            "Escola urbana · Alta complexidade · Alerta",
+            [
+                "Mapeie a fragmentação da jornada docente. Professores com IED alto — "
+                "que atuam em muitas turmas, etapas ou turnos simultaneamente — têm vínculo "
+                "menor com a unidade e tendem a sair primeiro em escolas de alta complexidade.",
+                "Avalie a distribuição de responsabilidades pedagógicas. Escolas com muitas "
+                "etapas e modalidades sobrecarregam coordenadores e diretores, "
+                "o que contamina o clima de trabalho e afeta a permanência dos professores.",
+                "Realize escuta estruturada com os professores mais antigos. Em escolas urbanas "
+                "de alta complexidade, quem permanece tem razões específicas — "
+                "identificá-las permite replicar o que funciona.",
+                "Acione a secretaria com os dados do RegDoc e solicite apoio técnico prioritário. "
+                "Escolas de alta complexidade em alerta exigem intervenção coordenada, "
+                "não apenas iniciativas isoladas da gestão escolar.",
+                "Revise o projeto pedagógico coletivo com a equipe. Professores comprometidos "
+                "com um propósito claro permanecem mais — especialmente quando participam "
+                "ativamente da construção desse projeto.",
+            ]
+        ),
+        ("alerta", "alta", "rural"): (
+            "Escola rural · Alta complexidade · Alerta",
+            [
+                "Investigue as condições de acesso e infraestrutura. Escolas rurais de alta "
+                "complexidade combinam o isolamento territorial com a sobrecarga de gestão — "
+                "esse conjunto é o principal preditor de rotatividade neste perfil.",
+                "Acione a secretaria para políticas de incentivo territorial. Gratificações "
+                "de localização, transporte garantido e habitação próxima são fatores "
+                "diretamente associados à retenção em escolas rurais com alta complexidade.",
+                "Verifique se os professores têm formação adequada para as etapas e modalidades "
+                "oferecidas. Alta complexidade em escola rural frequentemente inclui classes "
+                "multisseriadas ou EJA — professores sem preparo para essas modalidades "
+                "tendem a pedir transferência rapidamente.",
+                "Fortaleça o projeto pedagógico como âncora de pertencimento. Em contextos "
+                "rurais, o vínculo do professor com a comunidade é o principal fator de "
+                "permanência quando as condições materiais são limitadas.",
+                "Monitore o IED dos professores. Jornada muito fragmentada entre escolas "
+                "rurais distintas indica que o vínculo com cada unidade é fraco "
+                "e a saída se torna mais provável.",
+            ]
+        ),
+        ("alerta", "baixa", "urbana"): (
+            "Escola urbana · Baixa complexidade · Alerta",
+            [
+                "Investigue causas locais específicas. Escolas urbanas de baixa complexidade "
+                "em alerta são um sinal particular — o problema não é estrutural, "
+                "é provavelmente de clima organizacional ou gestão interna.",
+                "Compare com escolas de perfil similar no município usando o módulo "
+                "Comparação do RegDoc. Se escolas vizinhas de mesmo porte e etapa têm IRD "
+                "melhor, a causa está nesta unidade — não no território.",
+                "Converse com os professores que saíram nos últimos dois anos, se possível. "
+                "Em escolas de baixa complexidade, os motivos costumam ser mais "
+                "identificáveis e endereçáveis pela gestão.",
+                "Avalie o estilo de liderança da gestão escolar. A literatura sobre retenção "
+                "docente mostra que o diretor é o fator mais determinante da permanência "
+                "em escolas menores (Boyd et al., 2011).",
+                "Construa um plano de ação com a equipe e defina uma meta de IRD para o "
+                "próximo Censo Escolar. Escolas de menor porte têm maior agilidade "
+                "para implementar mudanças e medir resultados.",
+            ]
+        ),
+        ("alerta", "baixa", "rural"): (
+            "Escola rural · Baixa complexidade · Alerta",
+            [
+                "Priorize a investigação das condições de acesso. Escolas rurais pequenas "
+                "em alerta quase sempre têm rotatividade associada a dificuldades de "
+                "transporte, distância ou infraestrutura — fatores que a gestão escolar "
+                "não resolve sozinha.",
+                "Acione a secretaria para avaliar políticas de fixação docente. Mesmo em "
+                "escolas rurais menores, incentivos de localização fazem diferença "
+                "significativa na decisão de permanência.",
+                "Verifique se os professores que saíram foram transferidos para escolas "
+                "urbanas ou saíram da rede. Se é transferência interna, o problema é de "
+                "atratividade relativa — a escola precisa de diferencial para reter.",
+                "Envolva a comunidade local no projeto da escola. Em escolas rurais de "
+                "menor porte, o vínculo com a comunidade é o principal fator de retenção "
+                "quando as condições materiais não podem ser rapidamente melhoradas.",
+            ]
+        ),
+
+        # ══ ATENÇÃO ═══════════════════════════════════════════════════════════
+        ("atencao", "alta", "urbana"): (
+            "Escola urbana · Alta complexidade · Atenção",
+            [
+                "Verifique a tendência histórica antes de qualquer ação. Em escolas de alta "
+                "complexidade urbanas, a situação de atenção pode ser o início de uma "
+                "trajetória de queda — agir agora é mais eficiente do que esperar o alerta.",
+                "Revise a carga de trabalho dos professores. Alta complexidade urbana "
+                "frequentemente significa muitas turmas, etapas e demandas administrativas "
+                "acumuladas — o esgotamento é silencioso e percebido tardiamente.",
+                "Identifique os professores em risco de saída. Em escolas maiores, há sempre "
+                "um grupo com menos vínculo institucional — chegaram recentemente, atuam em "
+                "poucas horas ou têm IED alto. São os primeiros a sair.",
+                "Fortaleça momentos de reconhecimento coletivo. Professores de escolas "
+                "urbanas de alta complexidade relatam frequentemente invisibilidade dentro "
+                "da própria instituição como razão para considerar a saída.",
+            ]
+        ),
+        ("atencao", "alta", "rural"): (
+            "Escola rural · Alta complexidade · Atenção",
+            [
+                "Monitore com atenção redobrada. A combinação de localização rural e alta "
+                "complexidade torna este perfil vulnerável a deterioração rápida do IRD — "
+                "duas ou três saídas podem mover o indicador de atenção para alerta.",
+                "Antecipe conversas sobre continuidade com os professores antes do "
+                "encerramento do ano letivo. Em contextos rurais, a decisão de sair ou ficar "
+                "costuma ser tomada nesse período.",
+                "Acione preventivamente a secretaria para garantir reposição rápida em "
+                "caso de saída. Escolas rurais de alta complexidade têm maior dificuldade "
+                "de reposição — o tempo de vacância tem custo pedagógico alto.",
+                "Invista no sentido de pertencimento. Professores que se sentem parte de "
+                "algo maior — comunidade, projeto, missão — permanecem mais em contextos "
+                "rurais mesmo quando as condições materiais são desfavoráveis.",
+            ]
+        ),
+        ("atencao", "baixa", "urbana"): (
+            "Escola urbana · Baixa complexidade · Atenção",
+            [
+                "A situação de atenção é o melhor momento para agir — antes que se torne "
+                "alerta. Em escolas urbanas de baixa complexidade, intervenções preventivas "
+                "têm custo baixo e impacto direto.",
+                "Verifique se há professores com menos de dois anos na escola. Alta "
+                "concentração de docentes recentes é o principal preditor de queda futura "
+                "do IRD em escolas menores.",
+                "Fortaleça a integração de novos professores com a cultura da escola. "
+                "Programas de mentoria entre professores experientes e iniciantes "
+                "reduzem a saída precoce em escolas urbanas de menor porte.",
+                "Use o módulo Comparação do RegDoc para verificar se escolas similares "
+                "no município estão em situação melhor — se sim, há algo a aprender com elas.",
+            ]
+        ),
+        ("atencao", "baixa", "rural"): (
+            "Escola rural · Baixa complexidade · Atenção",
+            [
+                "Monitore a tendência histórica. Escolas rurais de baixa complexidade em "
+                "atenção são frequentemente estáveis nessa faixa por vários anos — "
+                "verifique se é estagnação ou declínio ativo.",
+                "Converse com os professores sobre suas expectativas para os próximos dois "
+                "anos. Em escolas rurais menores, a intenção de permanecer ou sair costuma "
+                "ser mais previsível e endereçável pela gestão.",
+                "Avalie se há professores em final de carreira ou próximos à aposentadoria "
+                "cuja saída impactará o IRD. Planejar a reposição com antecedência "
+                "reduz o impacto sobre o indicador.",
+            ]
+        ),
+
+        # ══ FAVORÁVEL ═════════════════════════════════════════════════════════
+        ("favoravel", "alta", "urbana"): (
+            "Escola urbana · Alta complexidade · Situação favorável",
+            [
+                "Identifique e sistematize o que está funcionando. Manter IRD alto em escola "
+                "urbana de alta complexidade é um resultado não trivial — as práticas que "
+                "explicam isso têm valor para toda a rede.",
+                "Proponha à secretaria que esta escola seja referência para visitas técnicas "
+                "de escolas em situação de atenção ou alerta com perfil similar.",
+                "Não reduza o esforço de gestão. Escolas bem-sucedidas frequentemente "
+                "revertem ganhos após atingir bons resultados — a estabilidade "
+                "exige manutenção ativa (Park, 2025).",
+                "Monitore o IED dos professores. Alta complexidade urbana com IRD alto "
+                "pode mudar rapidamente se a secretaria redistribuir professores experientes "
+                "para outras unidades ou aumentar a carga de trabalho.",
+            ]
+        ),
+        ("favoravel", "alta", "rural"): (
+            "Escola rural · Alta complexidade · Situação favorável",
+            [
+                "Este é um resultado expressivo. Escolas rurais de alta complexidade "
+                "raramente mantêm IRD alto sem fatores deliberados de retenção — "
+                "documente-os com detalhes.",
+                "Investigue o que ancora os professores nesta escola: vínculo com a "
+                "comunidade, liderança da gestão, condições específicas de trabalho. "
+                "Esse diagnóstico tem valor de política pública para a secretaria.",
+                "Compartilhe a experiência com a secretaria. A combinação de alta "
+                "complexidade e IRD favorável em contexto rural é rara o suficiente "
+                "para justificar um estudo de caso interno.",
+                "Mantenha o monitoramento anual. A situação favorável em escolas rurais "
+                "é mais frágil do que em escolas urbanas — uma mudança de gestão ou de "
+                "política de transporte pode deteriorá-la rapidamente.",
+            ]
+        ),
+        ("favoravel", "baixa", "urbana"): (
+            "Escola urbana · Baixa complexidade · Situação favorável",
+            [
+                "Identifique o que contribui para a estabilidade e registre formalmente. "
+                "Mesmo em escolas de baixa complexidade, boas práticas de gestão "
+                "fazem diferença e podem ser replicadas na rede.",
+                "Monitore anualmente para garantir que a estabilidade se mantém. "
+                "Mudanças de gestão ou de composição do corpo docente podem alterar "
+                "o IRD mesmo em escolas menores.",
+                "Use o módulo Comparação do RegDoc para verificar se escolas com perfil "
+                "similar estão em situação pior — se sim, esta unidade tem algo a ensinar.",
+            ]
+        ),
+        ("favoravel", "baixa", "rural"): (
+            "Escola rural · Baixa complexidade · Situação favorável",
+            [
+                "Reconheça e valorize a estabilidade construída. Manter professores em "
+                "escola rural exige esforço contínuo — comunique esse resultado à secretaria "
+                "como indicador de gestão positiva.",
+                "Investigue os fatores de permanência. Em escolas rurais pequenas, o vínculo "
+                "com a comunidade local é frequentemente o principal fator — "
+                "fortaleça esse elo ativamente.",
+                "Planeje a sucessão de professores próximos à aposentadoria para evitar "
+                "queda brusca do IRD nos próximos anos.",
+            ]
+        ),
+    }
+
+    chave = (ird_faixa, icg_nivel, loc)
+    return perfis.get(chave, (
+        f"Escola {loc} — complexidade {icg_nivel}",
+        [
+            "Consulte os dados do RegDoc e a equipe gestora para definir as ações "
+            "mais adequadas ao contexto desta unidade."
+        ]
+    ))
 
 
 # ── Início da página ───────────────────────────────────────────────────────────
@@ -278,49 +478,61 @@ media_ird_mun = df_mun[(df_mun["ANO"] == ano_ref) & (df_mun["CO_MUNICIPIO"] == c
 media_atu_nac = df_mun[df_mun["ANO"] == ano_ref]["ATU"].mean()
 ird = linha["IRD"]
 
-# ── Situação e orientações ─────────────────────────────────────────────────────
-if pd.isna(ird):
-    cor_hex="#aaa"; cor_bg="#f0f0f0"; situacao="Sem dados"
-    texto_sit="Não há dados de regularidade para esta escola no ano selecionado."
-    orientacoes=[]
-elif ird >= media_ird_nac:
-    cor_hex="#27ae60"; cor_bg="#eafaf1"; situacao="Situação favorável"
-    texto_sit=f"A regularidade dos professores desta escola ({formatar_br(ird)}) está acima da média nacional ({formatar_br(media_ird_nac)}) e da média de {mun_sel} ({formatar_br(media_ird_mun)}). O corpo docente apresenta boa estabilidade."
-    orientacoes=[
-        "Identifique o que está funcionando e sistematize as boas práticas para compartilhar com a rede.",
-        "Proponha à secretaria que esta escola seja referência para visitas técnicas de outras unidades.",
-        "Mantenha o monitoramento anual — resultados positivos podem se deteriorar se o ambiente de trabalho mudar.",
-        "Planeje a continuidade e a integração de novos professores para preservar a estabilidade construída.",
-    ]
-elif pd.notna(media_ird_mun) and ird >= media_ird_mun:
-    cor_hex="#f39c12"; cor_bg="#fef9e7"; situacao="Atenção"
-    texto_sit=f"A regularidade dos professores desta escola ({formatar_br(ird)}) está abaixo da média nacional ({formatar_br(media_ird_nac)}), mas acima da média de {mun_sel} ({formatar_br(media_ird_mun)}). Merece acompanhamento próximo."
-    orientacoes=[
-        "Verifique a tendência dos últimos anos — se o IRD está caindo consecutivamente, o problema está se agravando.",
-        "Converse com professores recentes para identificar rapidamente o que pode melhorar.",
-        "Fortaleça o projeto pedagógico coletivo — professores comprometidos com um propósito claro tendem a permanecer mais tempo.",
-        "Reconheça publicamente o esforço da equipe — o reconhecimento genuíno é um dos fatores de retenção mais poderosos.",
-    ]
-else:
-    cor_hex="#c0392b"; cor_bg="#fdedec"; situacao="Alerta"
-    texto_sit=f"A regularidade dos professores desta escola ({formatar_br(ird)}) está abaixo da média nacional ({formatar_br(media_ird_nac)}) e abaixo da média de {mun_sel} ({formatar_br(media_ird_mun)}). A gestão da rede deve priorizar o acompanhamento desta unidade."
-    orientacoes=[
-        "Ouça os professores antes de qualquer decisão. Realize conversas individuais para entender os motivos da saída.",
-        "Avalie as condições objetivas de trabalho. Turmas superlotadas e jornadas fragmentadas afastam os professores.",
-        "Construa um ambiente colaborativo. Escolas onde professores participam das decisões pedagógicas retêm mais docentes.",
-        "Acione a secretaria com dados. Use os dados do RegDoc para justificar apoio em lotação e formação.",
-        "Invista em formação continuada dentro da escola — professores que se desenvolvem profissionalmente tendem a permanecer.",
-    ]
+atu = linha.get("ATU")
+afd = linha.get("AFD")
+ied = linha.get("IED")
+icg = linha.get("ICG")
 
+# Localização — tenta TP_LOCALIZACAO; fallback para NO_LOCALIZACAO ou "1" (urbana)
+localizacao = linha.get("TP_LOCALIZACAO", linha.get("NO_LOCALIZACAO", "1"))
+
+# ── Situação e prescrição por perfil ──────────────────────────────────────────
+if pd.isna(ird):
+    cor_hex = "#aaa"; cor_bg = "#f0f0f0"; situacao = "Sem dados"
+    texto_sit = "Não há dados de regularidade para esta escola no ano selecionado."
+    label_perfil = None
+    orientacoes = []
+
+elif ird >= media_ird_nac:
+    cor_hex = "#27ae60"; cor_bg = "#eafaf1"; situacao = "Situação favorável"
+    texto_sit = (
+        f"A regularidade dos professores desta escola ({formatar_br(ird)}) está acima "
+        f"da média nacional ({formatar_br(media_ird_nac)}) e da média de {mun_sel} "
+        f"({formatar_br(media_ird_mun)}). O corpo docente apresenta boa estabilidade."
+    )
+    label_perfil, orientacoes = gerar_prescricao_por_perfil("favoravel", icg, localizacao)
+
+elif pd.notna(media_ird_mun) and ird >= media_ird_mun:
+    cor_hex = "#f39c12"; cor_bg = "#fef9e7"; situacao = "Atenção"
+    texto_sit = (
+        f"A regularidade dos professores desta escola ({formatar_br(ird)}) está abaixo "
+        f"da média nacional ({formatar_br(media_ird_nac)}), mas acima da média de "
+        f"{mun_sel} ({formatar_br(media_ird_mun)}). Merece acompanhamento próximo."
+    )
+    label_perfil, orientacoes = gerar_prescricao_por_perfil("atencao", icg, localizacao)
+
+else:
+    cor_hex = "#c0392b"; cor_bg = "#fdedec"; situacao = "Alerta"
+    texto_sit = (
+        f"A regularidade dos professores desta escola ({formatar_br(ird)}) está abaixo "
+        f"da média nacional ({formatar_br(media_ird_nac)}) e abaixo da média de "
+        f"{mun_sel} ({formatar_br(media_ird_mun)}). A gestão da rede deve priorizar "
+        f"o acompanhamento desta unidade."
+    )
+    label_perfil, orientacoes = gerar_prescricao_por_perfil("alerta", icg, localizacao)
+
+# Variação ano anterior
 hist = df_escola[df_escola["ANO"] <= ano_ref].sort_values("ANO")
 if len(hist) >= 2:
     variacao = hist["IRD"].iloc[-1] - hist["IRD"].iloc[-2]
-    ano_ant = int(hist["ANO"].iloc[-2])
-    texto_var = (f"Em relação a {ano_ant}, houve melhora de {formatar_br(variacao)}." if variacao > 0.05
+    ano_ant  = int(hist["ANO"].iloc[-2])
+    texto_var = (
+        f"Em relação a {ano_ant}, houve melhora de {formatar_br(variacao)}." if variacao > 0.05
         else f"Em relação a {ano_ant}, houve queda de {formatar_br(abs(variacao))}. Merece atenção da gestão." if variacao < -0.05
-        else f"Em relação a {ano_ant}, a regularidade permaneceu estável.")
+        else f"Em relação a {ano_ant}, a regularidade permaneceu estável."
+    )
 else:
-    variacao=None; texto_var="Não há ano anterior disponível para comparação."
+    variacao = None; texto_var = "Não há ano anterior disponível para comparação."
 
 # ── Painel principal ───────────────────────────────────────────────────────────
 st.markdown("---")
@@ -352,8 +564,14 @@ with col_comp:
 
 st.markdown(f"**Variação em relação ao ano anterior:** {texto_var}")
 
+# ── Orientações por perfil ─────────────────────────────────────────────────────
 if orientacoes:
-    with st.expander(f"📋 O que fazer? — Orientações para situação de {situacao}"):
+    with st.expander(f"📋 O que fazer? — {situacao}"):
+        if label_perfil:
+            st.markdown(
+                f"<span class='perfil-tag'>📍 {label_perfil}</span>",
+                unsafe_allow_html=True
+            )
         for i, ori in enumerate(orientacoes, 1):
             st.markdown(f"**{i}.** {ori}")
 
@@ -362,37 +580,54 @@ st.markdown("---")
 st.markdown("### Indicadores associados")
 st.caption("Passe o mouse sobre o ℹ para entender cada indicador")
 
-atu=linha.get("ATU"); afd=linha.get("AFD")
-ied=linha.get("IED"); icg=linha.get("ICG")
-
 col1, col2 = st.columns(2)
 with col1:
-    atu_i = ("Acima da média nacional. Turmas numerosas aumentam a sobrecarga dos professores." if pd.notna(atu) and atu > media_atu_nac+3
-        else "Abaixo da média nacional. Turmas menores favorecem a permanência dos professores." if pd.notna(atu) and atu < media_atu_nac-3
-        else f"Próximo à média nacional ({formatar_br(media_atu_nac,1)} alunos/turma)." if pd.notna(atu) else "Não disponível.")
+    atu_i = (
+        "Acima da média nacional. Turmas numerosas aumentam a sobrecarga dos professores."
+        if pd.notna(atu) and atu > media_atu_nac + 3
+        else "Abaixo da média nacional. Turmas menores favorecem a permanência dos professores."
+        if pd.notna(atu) and atu < media_atu_nac - 3
+        else f"Próximo à média nacional ({formatar_br(media_atu_nac,1)} alunos/turma)."
+        if pd.notna(atu) else "Não disponível."
+    )
     card_com_tooltip("Alunos por turma", "ATU", formatar_br(atu,1), atu_i)
 
-    afd_i = ("A maioria dos professores leciona na área em que se formou." if pd.notna(afd) and afd>=70
-        else "Parte dos professores atua fora da sua área de formação." if pd.notna(afd) and afd>=40
-        else "Grande parte dos professores atua fora da sua área de formação." if pd.notna(afd) else "Não disponível.")
-    card_com_tooltip("Formação adequada", "AFD", formatar_br(afd,1)+("%" if pd.notna(afd) else ""), afd_i)
+    afd_i = (
+        "A maioria dos professores leciona na área em que se formou."
+        if pd.notna(afd) and afd >= 70
+        else "Parte dos professores atua fora da sua área de formação."
+        if pd.notna(afd) and afd >= 40
+        else "Grande parte dos professores atua fora da sua área de formação."
+        if pd.notna(afd) else "Não disponível."
+    )
+    card_com_tooltip("Formação adequada", "AFD", formatar_br(afd,1) + ("%" if pd.notna(afd) else ""), afd_i)
 
 with col2:
-    ied_i = ("Jornada docente com alto nível de fragmentação — professores atuam em muitas escolas, turnos ou etapas." if pd.notna(ied) and ied>=50
-        else "Nível intermediário de fragmentação da jornada docente." if pd.notna(ied) and ied>=25
-        else "Jornada docente menos fragmentada — professores tendem a concentrar sua atuação nesta escola." if pd.notna(ied) else "Não disponível.")
-    card_com_tooltip("Esforço docente — IED", "IED", formatar_br(ied,1)+("%" if pd.notna(ied) else ""), ied_i)
+    ied_i = (
+        "Jornada docente com alto nível de fragmentação — professores atuam em muitas escolas, turnos ou etapas."
+        if pd.notna(ied) and ied >= 50
+        else "Nível intermediário de fragmentação da jornada docente."
+        if pd.notna(ied) and ied >= 25
+        else "Jornada docente menos fragmentada — professores tendem a concentrar sua atuação nesta escola."
+        if pd.notna(ied) else "Não disponível."
+    )
+    card_com_tooltip("Esforço docente — IED", "IED", formatar_br(ied,1) + ("%" if pd.notna(ied) else ""), ied_i)
 
-    icg_i = ("Escola de alta complexidade — oferece muitos turnos, etapas ou modalidades." if pd.notna(icg) and icg>=4
-        else "Escola de complexidade intermediária." if pd.notna(icg) and icg>=2.5
-        else "Escola de menor complexidade — estrutura mais simples de gerir." if pd.notna(icg) else "Não disponível.")
+    icg_i = (
+        "Escola de alta complexidade — oferece muitos turnos, etapas ou modalidades."
+        if pd.notna(icg) and icg >= 4
+        else "Escola de complexidade intermediária."
+        if pd.notna(icg) and icg >= 2.5
+        else "Escola de menor complexidade — estrutura mais simples de gerir."
+        if pd.notna(icg) else "Não disponível."
+    )
     card_com_tooltip("Complexidade da escola — ICG", "ICG", formatar_br(icg,1), icg_i)
 
 # ── Gráfico + tendência ────────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown("### Evolução da regularidade dos professores")
 
-ird_nac = df_mun.groupby("ANO")["IRD"].mean().reset_index()
+ird_nac   = df_mun.groupby("ANO")["IRD"].mean().reset_index()
 ird_mun_s = df_mun[df_mun["CO_MUNICIPIO"] == co_mun][["ANO","IRD"]].copy()
 
 fig = go.Figure()
@@ -408,7 +643,6 @@ fig.update_layout(height=380, margin=dict(l=20,r=20,t=20,b=20),
     xaxis_title="Ano")
 st.plotly_chart(fig, use_container_width=True)
 
-# Sinalização de tendência logo abaixo do gráfico
 tendencia = classificar_tendencia(df_escola, ano_ref)
 render_tendencia(tendencia)
 
@@ -429,11 +663,19 @@ def gerar_relatorio_escola():
     df_h = df_escola[["CO_ENTIDADE","ANO","IRD"]].copy()
     df_h["VAR"] = df_h["IRD"].diff()
     for _, r in df_h.iterrows():
-        var = formatar_br(r["VAR"]) if pd.notna(r["VAR"]) else "—"
-        cor_var = "#27ae60" if pd.notna(r["VAR"]) and r["VAR"]>0 else "#c0392b" if pd.notna(r["VAR"]) and r["VAR"]<0 else "#333"
+        var     = formatar_br(r["VAR"]) if pd.notna(r["VAR"]) else "—"
+        cor_var = "#27ae60" if pd.notna(r["VAR"]) and r["VAR"] > 0 else "#c0392b" if pd.notna(r["VAR"]) and r["VAR"] < 0 else "#333"
         rows += f"<tr><td>{int(r['CO_ENTIDADE'])}</td><td>{int(r['ANO'])}</td><td>{formatar_br(r['IRD'])}</td><td style='color:{cor_var}'>{var}</td></tr>"
 
-    ori_html = "".join([
+    perfil_html = ""
+    if label_perfil:
+        perfil_html = (
+            f"<div style='display:inline-block;background:#1a3a5c;color:white;"
+            f"font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;"
+            f"margin-bottom:8px;'>📍 {label_perfil}</div><br>"
+        )
+
+    ori_html = perfil_html + "".join([
         f"<div style='display:flex;gap:12px;align-items:flex-start;margin-bottom:8px;'>"
         f"<div style='min-width:22px;height:22px;background:{cor_hex};border-radius:50%;"
         f"display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:bold;'>{i}</div>"
@@ -550,7 +792,7 @@ def gerar_relatorio_escola():
   <h2>Indicadores associados</h2>{ind_html}
 </div>
 <div class="section">
-  <h2>O que fazer — situação de {situacao}</h2>
+  <h2>O que fazer — {situacao}</h2>
   <div class="alert-box">{ori_html}</div>
 </div>
 <div class="section">
