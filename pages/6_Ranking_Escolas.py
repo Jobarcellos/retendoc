@@ -94,7 +94,7 @@ else:
 # ─────────────────────────────────────────────
 media_ird_nac = df_mun[df_mun["ANO"] == ano_sel]["IRD"].mean()
 media_ird_mun = df_mun[
-    (df_mun["ANO"] == ano_sel) & (df_mun["CO_MUNICIPIO"] == co_mun)
+    (df_mun["ANO"] == ano_sel) & (df_mun["NO_MUNICIPIO"] == mun_sel)
 ]["IRD"].mean()
 
 # ─────────────────────────────────────────────
