@@ -27,6 +27,20 @@ st.markdown("""
     color:white; font-size:10px; font-weight:bold; cursor:help; }
 .tendencia-box { border-radius:8px; padding:0.8rem 1.2rem; margin:0.5rem 0 1rem 0;
     font-size:0.9rem; display:flex; align-items:flex-start; gap:0.8rem; }
+div[data-testid="stTabs"] button {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    padding: 0.6rem 1.6rem !important;
+    color: #1a3a5c !important;
+    border-bottom: 3px solid transparent !important;
+    letter-spacing: 0.03em !important;
+}
+div[data-testid="stTabs"] button[aria-selected="true"] {
+    color: #1a3a5c !important;
+    border-bottom: 3px solid #1a3a5c !important;
+    background: #eaf0fb !important;
+    border-radius: 6px 6px 0 0 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -242,7 +256,7 @@ tendencia = classificar_tendencia(df_mun, ano_ref)
 # ABAS
 # ══════════════════════════════════════════════════════════════════════════════
 st.markdown("---")
-aba1, aba2 = st.tabs(["📊 Análise do Município", "🏫 Ranking de Escolas"])
+aba1, aba2 = st.tabs(["📊  ANÁLISE DO MUNICÍPIO", "🏫  RANKING DE ESCOLAS"])
 
 # ─────────────────────────────────────────────
 # ABA 1 — conteúdo original intacto
