@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global
+from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global, sombrear_pandemia
 
 st.set_page_config(page_title="Painel da Rede · RegDoc", layout="wide")
 aplicar_estilo_global()
@@ -201,6 +201,7 @@ fig_evo = px.line(
 )
 fig_evo.update_layout(margin=dict(l=20,r=20,t=20,b=20))
 fig_evo.update_traces(line_width=2.5, marker_size=7)
+sombrear_pandemia(fig_evo)
 st.plotly_chart(fig_evo, use_container_width=True)
 
 st.markdown(
