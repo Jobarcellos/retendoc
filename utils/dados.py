@@ -190,6 +190,7 @@ def sombrear_pandemia(fig):
     políticas emergenciais da pandemia, não o comportamento típico da rede."""
     fig.add_vrect(x0=2019.5, x1=2021.5, fillcolor="#95a5a6",
                   opacity=0.12, line_width=0)
-    fig.add_annotation(x=2020.5, y=5.05, text="pandemia", showarrow=False,
+    fig.add_annotation(x=2020.5, y=1.0, yref="paper", yanchor="bottom",
+                       text="pandemia", showarrow=False,
                        font=dict(size=10, color="#7f8c8d"))
     return fig
