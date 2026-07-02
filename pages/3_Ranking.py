@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global
+from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global, classificar_risco
 
 st.set_page_config(page_title="Ranking · RegDoc", layout="wide")
 
@@ -72,15 +72,8 @@ media_ird_uf  = (df[(df["ANO"] == ano_sel) & (df["SG_UF"] == uf_sel)]["IRD"].mea
 
 df_rank = df_ano.dropna(subset=["IRD"]).copy()
 
-def classificar(ird):
-    if pd.isna(ird):         return "Sem dados", "#aaa"
-    if ird < media_ird*0.85: return "Alerta",    "#c0392b"
-    elif ird < media_ird:    return "Atenção",   "#e67e22"
-    elif ird < media_ird*1.1:return "Moderado",  "#f1c40f"
-    else:                    return "Favorável",  "#27ae60"
-
-df_rank["RISCO"] = df_rank["IRD"].apply(lambda x: classificar(x)[0])
-df_rank["COR"]   = df_rank["IRD"].apply(lambda x: classificar(x)[1])
+df_rank["RISCO"] = df_rank["IRD"].apply(lambda x: classificar_risco(x, media_ird)[0])
+df_rank["COR"]   = df_rank["IRD"].apply(lambda x: classificar_risco(x, media_ird)[1])
 df_rank = df_rank.sort_values("IRD", ascending=True)
 
 # ── Painel de situação ─────────────────────────────────────────────────────────
