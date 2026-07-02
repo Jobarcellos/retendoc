@@ -6,7 +6,9 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime
-from utils.dados import carregar_escola, carregar_municipal, formatar_br, aplicar_estilo_global
+from utils.dados import (carregar_escola, carregar_municipal, formatar_br,
+                         aplicar_estilo_global, classificar_tendencia,
+                         render_tendencia, sombrear_pandemia)
 
 st.set_page_config(page_title="Escola · RegDoc", layout="wide")
 
@@ -123,78 +125,6 @@ def card_com_tooltip(titulo, sigla, valor, interp):
         <div class="valor">{valor}</div>
         <div class="interp">{interp}</div>
     </div>""", unsafe_allow_html=True)
-
-
-# ── Tendência histórica ────────────────────────────────────────────────────────
-def classificar_tendencia(df_escola, ano_ref):
-    hist = df_escola[df_escola["ANO"] <= ano_ref].sort_values("ANO").dropna(subset=["IRD"])
-    if len(hist) < 3:
-        return None
-    anos    = hist["ANO"].values
-    valores = hist["IRD"].values
-    x       = anos.astype(float)
-    slope   = np.polyfit(x - x.mean(), valores, 1)[0]
-    ultimo  = valores[-1]
-    variacao = ultimo - valores[0]
-
-    ruptura = False
-    ano_ruptura = None
-    for i in range(1, len(anos)):
-        if valores[i] - valores[i-1] <= -0.5:
-            ruptura = True
-            ano_ruptura = int(anos[i])
-            break
-
-    if slope <= -0.15:
-        return {"icone": "📉", "cor_fundo": "#fdedec", "cor_borda": "#c0392b",
-                "texto": f"Em queda acelerada — perdeu {abs(variacao):.2f} pontos desde {int(anos[0])} "
-                         f"({slope:.2f} pts/ano em média). Requer ação imediata.",
-                "ruptura": ruptura, "ano_ruptura": ano_ruptura}
-    elif slope <= -0.05:
-        return {"icone": "↘️", "cor_fundo": "#fef9e7", "cor_borda": "#f39c12",
-                "texto": f"Tendência de queda desde {int(anos[0])} "
-                         f"({variacao:+.2f} pontos acumulados). "
-                         "Monitorar com atenção — se mantida, atingirá nível crítico.",
-                "ruptura": ruptura, "ano_ruptura": ano_ruptura}
-    elif slope < 0.05:
-        return {"icone": "➡️", "cor_fundo": "#f0f4f8", "cor_borda": "#7f8c8d",
-                "texto": f"Estável desde {int(anos[0])} (variação de {variacao:+.2f} pontos). "
-                         + ("Estabilidade positiva — IRD em nível satisfatório." if ultimo >= 3.0
-                            else "Estabilidade preocupante — IRD estagnado abaixo de 3,0."),
-                "ruptura": ruptura, "ano_ruptura": ano_ruptura}
-    elif slope < 0.15:
-        return {"icone": "↗️", "cor_fundo": "#eafaf1", "cor_borda": "#27ae60",
-                "texto": f"Em recuperação desde {int(anos[0])} "
-                         f"(+{variacao:.2f} pontos acumulados). "
-                         "Ações de retenção docente parecem estar surtindo efeito.",
-                "ruptura": False, "ano_ruptura": None}
-    else:
-        return {"icone": "📈", "cor_fundo": "#eafaf1", "cor_borda": "#27ae60",
-                "texto": f"Melhora expressiva desde {int(anos[0])} "
-                         f"(+{variacao:.2f} pontos, média de +{slope:.2f} pts/ano). "
-                         "Documentar as práticas que estão gerando esse resultado.",
-                "ruptura": False, "ano_ruptura": None}
-
-
-def render_tendencia(tendencia):
-    if tendencia is None:
-        return
-    ruptura_html = ""
-    if tendencia.get("ruptura"):
-        ruptura_html = (
-            f"<br><span style='color:#c0392b; font-size:0.85rem;'>"
-            f"⚠️ Ruptura detectada em {tendencia['ano_ruptura']}: "
-            f"queda brusca neste ano. Verificar causa.</span>"
-        )
-    st.markdown(
-        f"<div class='tendencia-box' style='background:{tendencia['cor_fundo']}; "
-        f"border-left:4px solid {tendencia['cor_borda']};'>"
-        f"<span style='font-size:1.3rem;'>{tendencia['icone']}</span>"
-        f"<div><strong style='color:{tendencia['cor_borda']};'>Tendência histórica</strong>"
-        f"<br><span style='color:#333;'>{tendencia['texto']}</span>"
-        f"{ruptura_html}</div></div>",
-        unsafe_allow_html=True
-    )
 
 
 # ── Prescrição por perfil (IRD × ICG × Localização) ───────────────────────────
@@ -641,6 +571,7 @@ fig.update_layout(height=380, margin=dict(l=20,r=20,t=20,b=20),
     legend=dict(orientation="h", y=-0.2),
     yaxis=dict(title="Regularidade (0 a 5)", range=[0,5.2]),
     xaxis_title="Ano")
+sombrear_pandemia(fig)
 st.plotly_chart(fig, use_container_width=True)
 
 tendencia = classificar_tendencia(df_escola, ano_ref)
