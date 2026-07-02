@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-from utils.dados import carregar_escola, carregar_municipal, formatar_br, aplicar_estilo_global
+from utils.dados import carregar_escola, carregar_municipal, formatar_br, aplicar_estilo_global, sombrear_pandemia
 
 st.set_page_config(page_title="Comparação · RegDoc", layout="wide")
 aplicar_estilo_global()
@@ -491,6 +491,7 @@ with aba_mun:
                 legend=dict(orientation="h",y=-0.2),
                 yaxis=dict(title="Regularidade (0 a 5)",range=[0,5.2]),
                 xaxis_title="Ano")
+            sombrear_pandemia(fig_evo_mun)
             st.plotly_chart(fig_evo_mun, use_container_width=True)
 
 # ── Nota metodológica ──────────────────────────────────────────────────────────
