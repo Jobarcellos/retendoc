@@ -586,8 +586,23 @@ with aba2:
 
         st.markdown("<br>", unsafe_allow_html=True)
         rm1, rm2 = st.columns(2)
-        rm1.metric(f"Média nacional — {ano_ref}", formatar_br(media_ird_nac, 3))
-        rm2.metric(f"Média {municipio_label} — {ano_ref}", formatar_br(ird, 3))
+        with rm1:
+            st.markdown(f"""
+            <div style="background:#f7f9fc; border:1px solid #dde4ed; border-radius:10px;
+                 padding:1rem 1.4rem; text-align:center;">
+                <p style="margin:0; font-size:0.8rem; color:#5a7a9a; font-weight:600;
+                   text-transform:uppercase; letter-spacing:0.04em;">Média nacional — {ano_ref}</p>
+                <p style="margin:0; font-size:2rem; font-weight:bold; color:#1a3a5c;">{formatar_br(media_ird_nac, 3)}</p>
+            </div>""", unsafe_allow_html=True)
+        with rm2:
+            st.markdown(f"""
+            <div style="background:{cor}18; border:2px solid {cor}; border-radius:10px;
+                 padding:1rem 1.4rem; text-align:center;">
+                <p style="margin:0; font-size:0.8rem; color:{cor}; font-weight:600;
+                   text-transform:uppercase; letter-spacing:0.04em;">Média {municipio_label} — {ano_ref}</p>
+                <p style="margin:0; font-size:2rem; font-weight:bold; color:{cor};">{formatar_br(ird, 3)}</p>
+                <p style="margin:0; font-size:0.95rem; font-weight:bold; color:{cor};">● {situacao}</p>
+            </div>""", unsafe_allow_html=True)
 
         # ── Tabela com cores do semáforo ───────────────────────────────────
         cols_base  = ["NO_ENTIDADE","IRD","RISCO"]
