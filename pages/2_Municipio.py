@@ -617,9 +617,8 @@ with aba2:
             "Favorável": "background-color: #e8f8f0; color: #27ae60; font-weight: 600;",
             "Sem dados": "background-color: #f5f5f5; color: #aaa;",
         }
-        df_styled = df_tab_esc.style.map(
-    lambda v: COR_FUNDO.get(v, ""), subset=["Situação"]
-)
+        df_styled = df_tab_esc.style.applymap(
+            lambda v: COR_FUNDO.get(v, ""), subset=["Situação"]
         )
         st.dataframe(df_styled, use_container_width=True)
 
@@ -656,7 +655,9 @@ with aba2:
                 rows_html += f"<tr>{cells}</tr>"
 
             hdrs_html = "<th>Posição</th>" + "".join(f"<th>{c}</th>" for c in df_tab_esc.columns)
-            filtros_txt = " · ".join(filtros_ativos) if filtros_ativos else "Todas as escolas"
+            filtros_txt  = " · ".join(filtros_ativos) if filtros_ativos else "Todas as escolas"
+            data_hora_rank = datetime.now().strftime("%d/%m/%Y %H:%M")
+            data_curta_rank = datetime.now().strftime("%d/%m/%Y")
 
             html_rank = f"""<!DOCTYPE html>
 <html lang='pt-BR'><head><meta charset='utf-8'>
@@ -685,7 +686,7 @@ with aba2:
     <p style='margin:0;font-size:11px;color:#b8cfe8;text-transform:uppercase;'>Ranking de Escolas — RegDoc</p>
     <h1>{municipio_label} · {uf_sel} · {ano_ref}</h1>
   </div>
-  <div style='font-size:0.8rem;color:#b8cfe8;text-align:right;'>Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}</div>
+  <div style='font-size:0.8rem;color:#b8cfe8;text-align:right;'>Gerado em {data_hora_rank}</div>
 </div>
 <div class='cards'>
   <div class='card'><div class='card-num'>{total_esc}</div><div>Total</div></div>
@@ -696,7 +697,7 @@ with aba2:
 <div class='filtros'>🔍 Filtros aplicados: {filtros_txt}</div>
 <table><thead><tr>{hdrs_html}</tr></thead><tbody>{rows_html}</tbody></table>
 <div class='footer'>
-  RegDoc · Dados: Censo Escolar/INEP · retendoc.streamlit.app · {datetime.now().strftime('%d/%m/%Y')}<br>
+  RegDoc · Dados: Censo Escolar/INEP · retendoc.streamlit.app · {data_curta_rank}<br>
   Abra no navegador e use Ctrl+P para imprimir ou salvar em PDF.
 </div></body></html>"""
 
