@@ -22,6 +22,18 @@ def _dados_home():
 
 ano_atual, n_alerta = _dados_home()
 
+# ── PWA — injeção do manifesto e meta tags mobile ─────────────────────────────
+st.markdown("""
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RegDoc">
+<meta name="theme-color" content="#1a3a5c">
+<link rel="apple-touch-icon" href="/icon-192.png">
+""", unsafe_allow_html=True)
+
+
 # ── Estilos globais ───────────────────────────────────────────────────────────
 st.markdown("""
 <style>
