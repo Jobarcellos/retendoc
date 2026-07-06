@@ -36,10 +36,10 @@ st.markdown("""
 .perfil-tag { display:inline-block; background:#1a3a5c; color:white;
     font-size:0.78rem; font-weight:600; padding:3px 10px; border-radius:20px;
     margin-bottom:0.6rem; letter-spacing:0.03em; }
+.comp-card { border-radius:10px; padding:1.2rem 1.5rem; text-align:center; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Tooltips ───────────────────────────────────────────────────────────────────
 TOOLTIPS = {
     "IRD": (
         "O IRD — Indicador de Regularidade do Docente — mede se os mesmos professores "
@@ -127,22 +127,12 @@ def card_com_tooltip(titulo, sigla, valor, interp):
     </div>""", unsafe_allow_html=True)
 
 
-# ── Prescrição por perfil (IRD × ICG × Localização) ───────────────────────────
 def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
-    """
-    Retorna (label_perfil, lista_orientacoes).
-    ird_faixa : "alerta" | "atencao" | "favoravel"
-    icg       : valor numérico (float) do indicador de complexidade
-    localizacao: valor da coluna TP_LOCALIZACAO (1=urbana, 2=rural)
-                 ou strings "Urbana"/"Rural"/"URBANA"/"RURAL"
-    """
     icg_nivel = "alta" if pd.notna(icg) and float(icg) >= 4 else "baixa"
     loc_str   = str(localizacao).strip()
     loc       = "rural" if loc_str in ["2", "Rural", "RURAL", "rural"] else "urbana"
 
     perfis = {
-
-        # ══ ALERTA ════════════════════════════════════════════════════════════
         ("alerta", "alta", "urbana"): (
             "Escola urbana · Alta complexidade · Alerta",
             [
@@ -222,8 +212,6 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "quando as condições materiais não podem ser rapidamente melhoradas.",
             ]
         ),
-
-        # ══ ATENÇÃO ═══════════════════════════════════════════════════════════
         ("atencao", "alta", "urbana"): (
             "Escola urbana · Alta complexidade · Atenção",
             [
@@ -288,8 +276,6 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "reduz o impacto sobre o indicador.",
             ]
         ),
-
-        # ══ FAVORÁVEL ═════════════════════════════════════════════════════════
         ("favoravel", "alta", "urbana"): (
             "Escola urbana · Alta complexidade · Situação favorável",
             [
@@ -300,7 +286,7 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "de escolas em situação de atenção ou alerta com perfil similar.",
                 "Não reduza o esforço de gestão. Escolas bem-sucedidas frequentemente "
                 "revertem ganhos após atingir bons resultados — a estabilidade "
-                "exige manutenção ativa (Park, 2025).",
+                "exige manutenção ativa.",
                 "Monitore o IED dos professores. Alta complexidade urbana com IRD alto "
                 "pode mudar rapidamente se a secretaria redistribuir professores experientes "
                 "para outras unidades ou aumentar a carga de trabalho.",
@@ -354,10 +340,7 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
     chave = (ird_faixa, icg_nivel, loc)
     return perfis.get(chave, (
         f"Escola {loc} — complexidade {icg_nivel}",
-        [
-            "Consulte os dados do RegDoc e a equipe gestora para definir as ações "
-            "mais adequadas ao contexto desta unidade."
-        ]
+        ["Consulte os dados do RegDoc e a equipe gestora para definir as ações mais adequadas."]
     ))
 
 
@@ -412,46 +395,33 @@ atu = linha.get("ATU")
 afd = linha.get("AFD")
 ied = linha.get("IED")
 icg = linha.get("ICG")
-
-# Localização — tenta TP_LOCALIZACAO; fallback para NO_LOCALIZACAO ou "1" (urbana)
 localizacao = linha.get("TP_LOCALIZACAO", linha.get("NO_LOCALIZACAO", "1"))
 
-# ── Situação e prescrição por perfil ──────────────────────────────────────────
+# ── Situação e prescrição ──────────────────────────────────────────────────────
 if pd.isna(ird):
     cor_hex = "#aaa"; cor_bg = "#f0f0f0"; situacao = "Sem dados"
     texto_sit = "Não há dados de regularidade para esta escola no ano selecionado."
-    label_perfil = None
-    orientacoes = []
-
+    label_perfil = None; orientacoes = []
 elif ird >= media_ird_nac:
     cor_hex = "#27ae60"; cor_bg = "#eafaf1"; situacao = "Situação favorável"
-    texto_sit = (
-        f"A regularidade dos professores desta escola ({formatar_br(ird)}) está acima "
-        f"da média nacional ({formatar_br(media_ird_nac)}) e da média de {mun_sel} "
-        f"({formatar_br(media_ird_mun)}). O corpo docente apresenta boa estabilidade."
-    )
+    texto_sit = (f"A regularidade dos professores desta escola ({formatar_br(ird)}) está acima "
+                 f"da média nacional ({formatar_br(media_ird_nac)}) e da média de {mun_sel} "
+                 f"({formatar_br(media_ird_mun)}). O corpo docente apresenta boa estabilidade.")
     label_perfil, orientacoes = gerar_prescricao_por_perfil("favoravel", icg, localizacao)
-
 elif pd.notna(media_ird_mun) and ird >= media_ird_mun:
     cor_hex = "#f39c12"; cor_bg = "#fef9e7"; situacao = "Atenção"
-    texto_sit = (
-        f"A regularidade dos professores desta escola ({formatar_br(ird)}) está abaixo "
-        f"da média nacional ({formatar_br(media_ird_nac)}), mas acima da média de "
-        f"{mun_sel} ({formatar_br(media_ird_mun)}). Merece acompanhamento próximo."
-    )
+    texto_sit = (f"A regularidade dos professores desta escola ({formatar_br(ird)}) está abaixo "
+                 f"da média nacional ({formatar_br(media_ird_nac)}), mas acima da média de "
+                 f"{mun_sel} ({formatar_br(media_ird_mun)}). Merece acompanhamento próximo.")
     label_perfil, orientacoes = gerar_prescricao_por_perfil("atencao", icg, localizacao)
-
 else:
     cor_hex = "#c0392b"; cor_bg = "#fdedec"; situacao = "Alerta"
-    texto_sit = (
-        f"A regularidade dos professores desta escola ({formatar_br(ird)}) está abaixo "
-        f"da média nacional ({formatar_br(media_ird_nac)}) e abaixo da média de "
-        f"{mun_sel} ({formatar_br(media_ird_mun)}). A gestão da rede deve priorizar "
-        f"o acompanhamento desta unidade."
-    )
+    texto_sit = (f"A regularidade dos professores desta escola ({formatar_br(ird)}) está abaixo "
+                 f"da média nacional ({formatar_br(media_ird_nac)}) e abaixo da média de "
+                 f"{mun_sel} ({formatar_br(media_ird_mun)}). A gestão da rede deve priorizar "
+                 f"o acompanhamento desta unidade.")
     label_perfil, orientacoes = gerar_prescricao_por_perfil("alerta", icg, localizacao)
 
-# Variação ano anterior
 hist = df_escola[df_escola["ANO"] <= ano_ref].sort_values("ANO")
 if len(hist) >= 2:
     variacao = hist["IRD"].iloc[-1] - hist["IRD"].iloc[-2]
@@ -494,14 +464,94 @@ with col_comp:
 
 st.markdown(f"**Variação em relação ao ano anterior:** {texto_var}")
 
+# ── ITEM 4: Comparação temporal ────────────────────────────────────────────────
+if len(anos_disp) >= 2:
+    with st.expander("📅 Comparar com outro ano", expanded=False):
+        anos_comp = [a for a in anos_disp if a != ano_ref]
+        ano_comp = st.selectbox(
+            "Selecione o ano para comparar",
+            sorted(anos_comp, reverse=True),
+            key="ano_comparacao"
+        )
+
+        linha_comp = df_escola[df_escola["ANO"] == ano_comp].iloc[0] if not df_escola[df_escola["ANO"] == ano_comp].empty else None
+
+        if linha_comp is not None:
+            ird_comp = linha_comp["IRD"]
+
+            # Determinar cor do ano de comparação
+            media_nac_comp = df_mun[df_mun["ANO"] == ano_comp]["IRD"].mean()
+            media_mun_comp = df_mun[(df_mun["ANO"] == ano_comp) & (df_mun["CO_MUNICIPIO"] == co_mun)]["IRD"].mean()
+
+            if pd.isna(ird_comp):
+                cor_comp = "#aaa"; sit_comp = "Sem dados"
+            elif ird_comp >= media_nac_comp:
+                cor_comp = "#27ae60"; sit_comp = "Favorável"
+            elif pd.notna(media_mun_comp) and ird_comp >= media_mun_comp:
+                cor_comp = "#f39c12"; sit_comp = "Atenção"
+            else:
+                cor_comp = "#c0392b"; sit_comp = "Alerta"
+
+            cc1, cc2, cc3 = st.columns([2, 1, 2])
+
+            with cc1:
+                st.markdown(f"""
+                <div class="comp-card" style="background:{cor_comp}22; border:2px solid {cor_comp};">
+                    <p style="color:{cor_comp}; margin:0; font-size:0.85rem; font-weight:600;">{ano_comp}</p>
+                    <p style="color:{cor_comp}; margin:0; font-size:2.5rem; font-weight:bold;">{formatar_br(ird_comp)}</p>
+                    <p style="color:{cor_comp}; margin:0; font-size:0.95rem;">● {sit_comp}</p>
+                </div>""", unsafe_allow_html=True)
+
+            with cc2:
+                if pd.notna(ird) and pd.notna(ird_comp):
+                    diff = ird - ird_comp
+                    seta = "▲" if diff > 0 else "▼" if diff < 0 else "="
+                    cor_diff = "#27ae60" if diff > 0 else "#c0392b" if diff < 0 else "#777"
+                    st.markdown(f"""
+                    <div style="text-align:center; padding:2rem 0;">
+                        <p style="font-size:1.8rem; color:{cor_diff}; margin:0;">{seta}</p>
+                        <p style="font-size:1.1rem; font-weight:bold; color:{cor_diff}; margin:0;">
+                            {formatar_br(abs(diff))}
+                        </p>
+                        <p style="font-size:0.8rem; color:#777; margin:0;">pontos</p>
+                    </div>""", unsafe_allow_html=True)
+
+            with cc3:
+                st.markdown(f"""
+                <div class="comp-card" style="background:{cor_hex}22; border:2px solid {cor_hex};">
+                    <p style="color:{cor_hex}; margin:0; font-size:0.85rem; font-weight:600;">{ano_ref}</p>
+                    <p style="color:{cor_hex}; margin:0; font-size:2.5rem; font-weight:bold;">{formatar_br(ird)}</p>
+                    <p style="color:{cor_hex}; margin:0; font-size:0.95rem;">● {situacao}</p>
+                </div>""", unsafe_allow_html=True)
+
+            # Comparação dos indicadores associados
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("**Evolução dos indicadores associados:**")
+
+            inds = []
+            for sigla, nome in [("ATU","Alunos/turma"),("AFD","Formação (%)"),("IED","Esforço docente (%)"),("ICG","Complexidade")]:
+                if sigla in df_escola.columns:
+                    v_ref  = linha.get(sigla)
+                    v_comp = linha_comp.get(sigla)
+                    if pd.notna(v_ref) and pd.notna(v_comp):
+                        diff_i = v_ref - v_comp
+                        inds.append({
+                            "Indicador": nome,
+                            str(ano_comp): formatar_br(v_comp, 1),
+                            str(ano_ref):  formatar_br(v_ref, 1),
+                            "Variação": f"+{formatar_br(diff_i,1)}" if diff_i > 0 else formatar_br(diff_i,1)
+                        })
+
+            if inds:
+                st.dataframe(pd.DataFrame(inds), use_container_width=True, hide_index=True)
+        else:
+            st.info(f"Sem dados disponíveis para {ano_comp}.")
+
 # ── Orientações por perfil ─────────────────────────────────────────────────────
 if orientacoes:
     with st.expander(f"📋 O que fazer? — {situacao}"):
         if label_perfil:
-            st.markdown(
-                f"<span class='perfil-tag'>📍 {label_perfil}</span>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<span class='perfil-tag'>📍 {label_perfil}</span>", unsafe_allow_html=True)
         for i, ori in enumerate(orientacoes, 1):
             st.markdown(f"**{i}.** {ori}")
 
@@ -534,11 +584,11 @@ with col1:
 
 with col2:
     ied_i = (
-        "Jornada docente com alto nível de fragmentação — professores atuam em muitas escolas, turnos ou etapas."
+        "Jornada docente com alto nível de fragmentação."
         if pd.notna(ied) and ied >= 50
         else "Nível intermediário de fragmentação da jornada docente."
         if pd.notna(ied) and ied >= 25
-        else "Jornada docente menos fragmentada — professores tendem a concentrar sua atuação nesta escola."
+        else "Jornada docente menos fragmentada."
         if pd.notna(ied) else "Não disponível."
     )
     card_com_tooltip("Esforço docente — IED", "IED", formatar_br(ied,1) + ("%" if pd.notna(ied) else ""), ied_i)
@@ -663,8 +713,7 @@ def gerar_relatorio_escola():
 
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-<meta charset="utf-8">
+<head><meta charset="utf-8">
 <title>RegDoc — {escola_sel}</title>
 <style>
   body{{font-family:Arial,sans-serif;margin:0;padding:2rem;color:#222;max-width:900px;margin:0 auto;}}
@@ -688,9 +737,7 @@ def gerar_relatorio_escola():
   .alert-box{{border:1px solid {cor_hex};border-radius:8px;padding:1rem;background:{cor_bg};}}
   .footer{{text-align:center;font-size:11px;color:#aaa;margin-top:2rem;border-top:1px solid #eee;padding-top:1rem;}}
   @media print{{body{{padding:1rem;}}}}
-</style>
-</head>
-<body>
+</style></head><body>
 <div class="header">
   <div>
     <p style="margin:0;font-size:11px;color:#b8cfe8;text-transform:uppercase;">Relatório RegDoc — Escola</p>
@@ -702,8 +749,7 @@ def gerar_relatorio_escola():
 <div class="grid2">
   <div class="ird-box">
     <p class="ird-label">Regularidade dos professores (0 a 5)</p>
-    <p class="ird-num">{formatar_br(ird)}</p>
-    <p class="ird-sit">● {situacao}</p>
+    <p class="ird-num">{formatar_br(ird)}</p><p class="ird-sit">● {situacao}</p>
   </div>
   <div class="metrics">
     <div class="metric"><p class="val">{formatar_br(media_ird_nac)}</p><p class="lbl">Média nacional</p></div>
@@ -714,24 +760,16 @@ def gerar_relatorio_escola():
 </div>
 <p style="font-size:13px;margin-bottom:1rem;">{texto_sit}<br><strong>Variação:</strong> {texto_var}</p>
 {tend_html}
-<div class="section">
-  <h2>Histórico de regularidade</h2>
+<div class="section"><h2>Histórico de regularidade</h2>
   <table><thead><tr><th>Código INEP</th><th>Ano</th><th>Regularidade (0-5)</th><th>Variação</th></tr></thead>
   <tbody>{rows}</tbody></table>
 </div>
-<div class="section">
-  <h2>Indicadores associados</h2>{ind_html}
-</div>
-<div class="section">
-  <h2>O que fazer — {situacao}</h2>
+<div class="section"><h2>Indicadores associados</h2>{ind_html}</div>
+<div class="section"><h2>O que fazer — {situacao}</h2>
   <div class="alert-box">{ori_html}</div>
 </div>
-<div class="section">
-  <h2>Checklist de ação</h2>{checklist}
-</div>
-<div class="footer">
-  RegDoc · Dados: Censo Escolar/Inep · retendoc.streamlit.app · {datetime.now().strftime('%d/%m/%Y')}
-</div>
+<div class="section"><h2>Checklist de ação</h2>{checklist}</div>
+<div class="footer">RegDoc · Dados: Censo Escolar/Inep · retendoc.streamlit.app · {datetime.now().strftime('%d/%m/%Y')}</div>
 </body></html>"""
 
 html = gerar_relatorio_escola()
