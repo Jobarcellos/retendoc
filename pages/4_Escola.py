@@ -780,3 +780,7 @@ st.download_button(
     mime="text/html"
 )
 st.caption("Abra o arquivo no navegador e use Ctrl+P para imprimir ou salvar em PDF.")
+
+st.markdown("---")
+st.caption("RegDoc · Fonte: Censo Escolar / INEP · Atualização anual mediante publicação do Censo Escolar.")
+st.caption("© 2026 Joelma Barcellos Santanna · Doutorado Profissional em Administração, FUCAPE Business School.")
