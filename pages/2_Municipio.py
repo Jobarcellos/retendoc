@@ -617,8 +617,9 @@ with aba2:
             "Favorável": "background-color: #e8f8f0; color: #27ae60; font-weight: 600;",
             "Sem dados": "background-color: #f5f5f5; color: #aaa;",
         }
-        df_styled = df_tab_esc.style.applymap(
-            lambda v: COR_FUNDO.get(v, ""), subset=["Situação"]
+        df_styled = df_tab_esc.style.map(
+    lambda v: COR_FUNDO.get(v, ""), subset=["Situação"]
+)
         )
         st.dataframe(df_styled, use_container_width=True)
 
