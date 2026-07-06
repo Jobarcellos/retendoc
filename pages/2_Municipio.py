@@ -109,7 +109,7 @@ def load_escolas():
 
 df_esc = load_escolas()
 
-# ── Filtros compartilhados (fora das abas) ────────────────────────────────────
+# ── Filtros compartilhados (fora das abas) ─────────────────────────────────────
 col1, col2 = st.columns([1, 2])
 with col1:
     ufs = sorted(df["SG_UF"].dropna().unique())
@@ -131,13 +131,11 @@ if df_mun.empty:
 ano_ref = st.selectbox("Ano de referência", sorted(df_mun["ANO"].unique()),
                        index=len(df_mun["ANO"].unique()) - 1)
 
-# Variáveis compartilhadas entre as duas abas
 linha_atual   = df_mun[df_mun["ANO"] == ano_ref].iloc[0]
 media_ird_nac = df[df["ANO"] == ano_ref]["IRD"].mean()
 media_ird_uf  = df[(df["ANO"] == ano_ref) & (df["SG_UF"] == uf_sel)]["IRD"].mean()
 ird           = linha_atual["IRD"]
 
-# Situação e orientações
 if pd.isna(ird):
     cor = "#aaa"; situacao = "Sem dados"
     texto_sit = "Não há dados de regularidade para este município no ano selecionado."
@@ -197,7 +195,7 @@ st.markdown("---")
 aba1, aba2 = st.tabs(["📊  ANÁLISE DO MUNICÍPIO", "🏫  RANKING DE ESCOLAS"])
 
 # ─────────────────────────────────────────────
-# ABA 1 — conteúdo original intacto
+# ABA 1 — análise do município
 # ─────────────────────────────────────────────
 with aba1:
     st.markdown(f"### {municipio_label} · {uf_sel} · {ano_ref}")
@@ -407,7 +405,7 @@ with aba1:
     st.caption("Abra o arquivo no navegador e use Ctrl+P para imprimir ou salvar em PDF.")
 
 # ─────────────────────────────────────────────
-# ABA 2 — Ranking de Escolas com filtros
+# ABA 2 — Ranking de Escolas
 # ─────────────────────────────────────────────
 with aba2:
     st.markdown(f"### Escolas de {municipio_label} — {ano_ref}")
@@ -418,12 +416,22 @@ with aba2:
         "🟢 Favorável = acima da média nacional."
     )
 
-    # ── Filtros de dependência e etapa ─────────────────────────────────────
     tem_dep   = "NO_DEPENDENCIA" in df_esc.columns
     tem_etapa = "IN_FUND" in df_esc.columns
 
+    # ── ITEM 1: Buscador por nome + ITEM 3: Contador de filtros ativos ─────
+    filtros_ativos = []
+
+    busca_nome = st.text_input(
+        "🔎 Buscar escola pelo nome",
+        placeholder="Digite parte do nome da escola...",
+        key="busca_escola"
+    )
+    if busca_nome.strip():
+        filtros_ativos.append(f"Nome contém '{busca_nome.strip()}'")
+
     if tem_dep or tem_etapa:
-        with st.expander("🔎 Filtrar escolas", expanded=False):
+        with st.expander("⚙️ Filtros adicionais", expanded=False):
             fc1, fc2 = st.columns(2)
 
             if tem_dep:
@@ -437,6 +445,8 @@ with aba2:
                     default=deps_disp,
                     help="Municipal, Estadual, Privada ou Federal"
                 )
+                if set(dep_sel) != set(deps_disp):
+                    filtros_ativos.append(f"Dependência: {', '.join(dep_sel)}")
             else:
                 dep_sel = None
 
@@ -445,15 +455,40 @@ with aba2:
                     "Etapa de ensino oferecida",
                     options=["Educação Infantil", "Ensino Fundamental", "Ensino Médio"],
                     default=[],
-                    help="Selecione uma ou mais etapas. Vazio = todas as escolas."
+                    help="Vazio = todas as escolas."
                 )
+                if etapa_sel:
+                    filtros_ativos.append(f"Etapa: {', '.join(etapa_sel)}")
             else:
                 etapa_sel = []
+    else:
+        dep_sel   = None
+        etapa_sel = []
+
+    # ITEM 3: Exibir badge de filtros ativos
+    if filtros_ativos:
+        badges = " · ".join([f"**{f}**" for f in filtros_ativos])
+        st.markdown(
+            f"<div style='background:#eaf0fb; border-left:4px solid #1a3a5c; "
+            f"padding:0.5rem 1rem; border-radius:0 6px 6px 0; margin-bottom:0.5rem; "
+            f"font-size:0.85rem; color:#1a3a5c;'>"
+            f"🔍 Filtros ativos: {' · '.join(filtros_ativos)}"
+            f"</div>",
+            unsafe_allow_html=True
+        )
 
     # ── Dados do município no ano ───────────────────────────────────────────
     df_esc_mun = df_esc[
         (df_esc["CO_MUNICIPIO"] == co_mun) & (df_esc["ANO"] == ano_ref)
     ].copy()
+
+    # Aplicar busca por nome
+    if busca_nome.strip():
+        df_esc_mun = df_esc_mun[
+            df_esc_mun["NO_ENTIDADE"].str.upper().str.contains(
+                busca_nome.strip().upper(), na=False
+            )
+        ]
 
     # Aplicar filtro de dependência
     if tem_dep and dep_sel is not None:
@@ -462,9 +497,9 @@ with aba2:
     # Aplicar filtro de etapa
     if tem_etapa and etapa_sel:
         mapa_etapa = {
-            "Educação Infantil":   "IN_INF",
-            "Ensino Fundamental":  "IN_FUND",
-            "Ensino Médio":        "IN_MED",
+            "Educação Infantil":  "IN_INF",
+            "Ensino Fundamental": "IN_FUND",
+            "Ensino Médio":       "IN_MED",
         }
         mascara = pd.Series(False, index=df_esc_mun.index)
         for etapa in etapa_sel:
@@ -482,9 +517,9 @@ with aba2:
         CORES_ESC = {"Alerta":"#c0392b","Atenção":"#e67e22","Favorável":"#27ae60"}
 
         def classif_esc(v):
-            if pd.isna(v):                                          return "Sem dados"
-            if pd.notna(media_ird_nac) and v >= media_ird_nac:     return "Favorável"
-            if pd.notna(ird) and v >= ird:                          return "Atenção"
+            if pd.isna(v):                                      return "Sem dados"
+            if pd.notna(media_ird_nac) and v >= media_ird_nac: return "Favorável"
+            if pd.notna(ird) and v >= ird:                      return "Atenção"
             return "Alerta"
 
         ORDEM_ESC = {"Alerta":0,"Atenção":1,"Favorável":2,"Sem dados":3}
@@ -519,7 +554,6 @@ with aba2:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Banner
         if n_alerta > 0:
             st.error(
                 f"⚠️ **{n_alerta} escola(s) em Alerta** — IRD abaixo da média municipal "
@@ -535,25 +569,26 @@ with aba2:
                 f"✅ Todas as escolas com IRD acima da média nacional ({formatar_br(media_ird_nac, 3)})."
             )
 
-        # Referências
         st.markdown("<br>", unsafe_allow_html=True)
         rm1, rm2 = st.columns(2)
         rm1.metric(f"Média nacional — {ano_ref}", formatar_br(media_ird_nac, 3))
         rm2.metric(f"Média {municipio_label} — {ano_ref}", formatar_br(ird, 3))
 
-        # Tabela
+        # ── ITEM 2: Tabela com cores do semáforo ───────────────────────────
         cols_base  = ["NO_ENTIDADE","IRD","RISCO"]
         if tem_dep:
             cols_base.append("NO_DEPENDENCIA")
         cols_extra = [c for c in ["ICG","ATU","AFD","IED"] if c in df_esc_rank.columns]
 
         df_tab_esc = df_esc_rank[cols_base + cols_extra].copy()
+
         fmt_esc = {"IRD":3,"ICG":2,"ATU":1,"AFD":1,"IED":1}
         for col, dec in fmt_esc.items():
             if col in df_tab_esc.columns:
                 df_tab_esc[col] = df_tab_esc[col].apply(
                     lambda x: formatar_br(x, dec) if pd.notna(x) else "—"
                 )
+
         df_tab_esc = df_tab_esc.rename(columns={
             "NO_ENTIDADE":    "Escola",
             "IRD":            "Regularidade",
@@ -567,7 +602,22 @@ with aba2:
         df_tab_esc.index = df_tab_esc.index + 1
         df_tab_esc.index.name = "Posição"
 
-        st.dataframe(df_tab_esc, use_container_width=True)
+        # Aplicar cores na coluna Situação
+        COR_FUNDO = {
+            "Alerta":    "background-color: #fde8e8; color: #c0392b; font-weight: 600;",
+            "Atenção":   "background-color: #fef3e2; color: #e67e22; font-weight: 600;",
+            "Favorável": "background-color: #e8f8f0; color: #27ae60; font-weight: 600;",
+            "Sem dados": "background-color: #f5f5f5; color: #aaa;",
+        }
+
+        def colorir_situacao(val):
+            return COR_FUNDO.get(val, "")
+
+        df_styled = df_tab_esc.style.applymap(
+            colorir_situacao, subset=["Situação"]
+        )
+
+        st.dataframe(df_styled, use_container_width=True)
 
         col_csv, _ = st.columns([1, 3])
         with col_csv:
@@ -588,7 +638,7 @@ with aba2:
         if tem_dep or tem_etapa:
             st.caption(
                 "ℹ️ Dependência administrativa e etapas de ensino baseadas no Censo Escolar 2022 "
-                "e aplicadas como referência para toda a série histórica."
+                "como referência para toda a série histórica."
             )
 
 st.markdown("---")
