@@ -1,0 +1,22 @@
+{
+  "name": "RegDoc — Regularidade Docente",
+  "short_name": "RegDoc",
+  "description": "Monitoramento da permanência dos professores nas redes municipais brasileiras",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a3a5c",
+  "theme_color": "#1a3a5c",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/Jobarcellos/retendoc/main/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/Jobarcellos/retendoc/main/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
