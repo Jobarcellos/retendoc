@@ -109,7 +109,7 @@ def load_escolas():
 
 df_esc = load_escolas()
 
-# ── Filtros compartilhados (fora das abas) ─────────────────────────────────────
+# ── Filtros compartilhados ─────────────────────────────────────────────────────
 col1, col2 = st.columns([1, 2])
 with col1:
     ufs = sorted(df["SG_UF"].dropna().unique())
@@ -195,7 +195,7 @@ st.markdown("---")
 aba1, aba2 = st.tabs(["📊  ANÁLISE DO MUNICÍPIO", "🏫  RANKING DE ESCOLAS"])
 
 # ─────────────────────────────────────────────
-# ABA 1 — análise do município
+# ABA 1 — idêntica ao documento 6
 # ─────────────────────────────────────────────
 with aba1:
     st.markdown(f"### {municipio_label} · {uf_sel} · {ano_ref}")
@@ -419,7 +419,7 @@ with aba2:
     tem_dep   = "NO_DEPENDENCIA" in df_esc.columns
     tem_etapa = "IN_FUND" in df_esc.columns
 
-    # ── ITEM 1: Buscador por nome + ITEM 3: Contador de filtros ativos ─────
+    # ── Busca por nome (sempre visível) ───────────────────────────────────
     filtros_ativos = []
 
     busca_nome = st.text_input(
@@ -430,8 +430,9 @@ with aba2:
     if busca_nome.strip():
         filtros_ativos.append(f"Nome contém '{busca_nome.strip()}'")
 
+    # ── Filtros adicionais (dependência e etapa) ───────────────────────────
     if tem_dep or tem_etapa:
-        with st.expander("⚙️ Filtros adicionais", expanded=False):
+        with st.expander("⚙️ Filtros adicionais — dependência e etapa de ensino", expanded=False):
             fc1, fc2 = st.columns(2)
 
             if tem_dep:
@@ -465,9 +466,8 @@ with aba2:
         dep_sel   = None
         etapa_sel = []
 
-    # ITEM 3: Exibir badge de filtros ativos
+    # ── Badge de filtros ativos ────────────────────────────────────────────
     if filtros_ativos:
-        badges = " · ".join([f"**{f}**" for f in filtros_ativos])
         st.markdown(
             f"<div style='background:#eaf0fb; border-left:4px solid #1a3a5c; "
             f"padding:0.5rem 1rem; border-radius:0 6px 6px 0; margin-bottom:0.5rem; "
@@ -477,12 +477,14 @@ with aba2:
             unsafe_allow_html=True
         )
 
-    # ── Dados do município no ano ───────────────────────────────────────────
+    # ── Carregar e filtrar dados ───────────────────────────────────────────
     df_esc_mun = df_esc[
         (df_esc["CO_MUNICIPIO"] == co_mun) & (df_esc["ANO"] == ano_ref)
     ].copy()
 
-    # Aplicar busca por nome
+    total_mun = len(df_esc_mun)  # total antes de filtrar (para cobertura)
+
+    # Busca por nome
     if busca_nome.strip():
         df_esc_mun = df_esc_mun[
             df_esc_mun["NO_ENTIDADE"].str.upper().str.contains(
@@ -490,11 +492,11 @@ with aba2:
             )
         ]
 
-    # Aplicar filtro de dependência
+    # Filtro de dependência
     if tem_dep and dep_sel is not None:
         df_esc_mun = df_esc_mun[df_esc_mun["NO_DEPENDENCIA"].isin(dep_sel)]
 
-    # Aplicar filtro de etapa
+    # Filtro de etapa
     if tem_etapa and etapa_sel:
         mapa_etapa = {
             "Educação Infantil":  "IN_INF",
@@ -508,6 +510,14 @@ with aba2:
                 mascara = mascara | (df_esc_mun[col_etapa] == 1)
         df_esc_mun = df_esc_mun[mascara]
 
+    # ── Indicador de cobertura ─────────────────────────────────────────────
+    if filtros_ativos and total_mun > 0:
+        pct_cob = round(len(df_esc_mun) / total_mun * 100, 1)
+        st.caption(
+            f"ℹ️ Exibindo **{len(df_esc_mun)} de {total_mun} escolas** "
+            f"do município ({pct_cob}% da rede) com os filtros aplicados."
+        )
+
     if df_esc_mun.empty:
         st.info("Nenhuma escola encontrada com os filtros selecionados.")
     else:
@@ -517,9 +527,9 @@ with aba2:
         CORES_ESC = {"Alerta":"#c0392b","Atenção":"#e67e22","Favorável":"#27ae60"}
 
         def classif_esc(v):
-            if pd.isna(v):                                      return "Sem dados"
-            if pd.notna(media_ird_nac) and v >= media_ird_nac: return "Favorável"
-            if pd.notna(ird) and v >= ird:                      return "Atenção"
+            if pd.isna(v):                                          return "Sem dados"
+            if pd.notna(media_ird_nac) and v >= media_ird_nac:     return "Favorável"
+            if pd.notna(ird) and v >= ird:                          return "Atenção"
             return "Alerta"
 
         ORDEM_ESC = {"Alerta":0,"Atenção":1,"Favorável":2,"Sem dados":3}
@@ -554,6 +564,7 @@ with aba2:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
+        # Banner
         if n_alerta > 0:
             st.error(
                 f"⚠️ **{n_alerta} escola(s) em Alerta** — IRD abaixo da média municipal "
@@ -574,21 +585,19 @@ with aba2:
         rm1.metric(f"Média nacional — {ano_ref}", formatar_br(media_ird_nac, 3))
         rm2.metric(f"Média {municipio_label} — {ano_ref}", formatar_br(ird, 3))
 
-        # ── ITEM 2: Tabela com cores do semáforo ───────────────────────────
+        # ── Tabela com cores do semáforo ───────────────────────────────────
         cols_base  = ["NO_ENTIDADE","IRD","RISCO"]
         if tem_dep:
             cols_base.append("NO_DEPENDENCIA")
         cols_extra = [c for c in ["ICG","ATU","AFD","IED"] if c in df_esc_rank.columns]
 
         df_tab_esc = df_esc_rank[cols_base + cols_extra].copy()
-
         fmt_esc = {"IRD":3,"ICG":2,"ATU":1,"AFD":1,"IED":1}
         for col, dec in fmt_esc.items():
             if col in df_tab_esc.columns:
                 df_tab_esc[col] = df_tab_esc[col].apply(
                     lambda x: formatar_br(x, dec) if pd.notna(x) else "—"
                 )
-
         df_tab_esc = df_tab_esc.rename(columns={
             "NO_ENTIDADE":    "Escola",
             "IRD":            "Regularidade",
@@ -602,25 +611,21 @@ with aba2:
         df_tab_esc.index = df_tab_esc.index + 1
         df_tab_esc.index.name = "Posição"
 
-        # Aplicar cores na coluna Situação
         COR_FUNDO = {
             "Alerta":    "background-color: #fde8e8; color: #c0392b; font-weight: 600;",
             "Atenção":   "background-color: #fef3e2; color: #e67e22; font-weight: 600;",
             "Favorável": "background-color: #e8f8f0; color: #27ae60; font-weight: 600;",
             "Sem dados": "background-color: #f5f5f5; color: #aaa;",
         }
-
-        def colorir_situacao(val):
-            return COR_FUNDO.get(val, "")
-
         df_styled = df_tab_esc.style.applymap(
-            colorir_situacao, subset=["Situação"]
+            lambda v: COR_FUNDO.get(v, ""), subset=["Situação"]
         )
-
         st.dataframe(df_styled, use_container_width=True)
 
-        col_csv, _ = st.columns([1, 3])
-        with col_csv:
+        # ── Downloads ──────────────────────────────────────────────────────
+        dl1, dl2, _ = st.columns([1, 1, 2])
+
+        with dl1:
             csv_esc = df_tab_esc.to_csv(index=True).encode("utf-8-sig")
             st.download_button(
                 label="📥 Baixar ranking (CSV)",
@@ -629,12 +634,83 @@ with aba2:
                 mime="text/csv",
             )
 
+        with dl2:
+            # Relatório HTML do ranking
+            rows_html = ""
+            for pos, row in enumerate(df_tab_esc.itertuples(), start=1):
+                vals = list(row)[1:]
+                sit  = vals[1] if len(vals) > 1 else ""
+                cor_sit = ("#fde8e8" if "Alerta" in str(sit)
+                           else "#fef3e2" if "Atenção" in str(sit)
+                           else "#e8f8f0" if "Favorável" in str(sit) else "#f5f5f5")
+                cor_txt = ("#c0392b" if "Alerta" in str(sit)
+                           else "#e67e22" if "Atenção" in str(sit)
+                           else "#27ae60" if "Favorável" in str(sit) else "#555")
+                cells = f"<td><b>{pos}</b></td>"
+                for v in vals:
+                    if v == sit:
+                        cells += f"<td style='background:{cor_sit};color:{cor_txt};font-weight:600'>{v}</td>"
+                    else:
+                        cells += f"<td>{v}</td>"
+                rows_html += f"<tr>{cells}</tr>"
+
+            hdrs_html = "<th>Posição</th>" + "".join(f"<th>{c}</th>" for c in df_tab_esc.columns)
+            filtros_txt = " · ".join(filtros_ativos) if filtros_ativos else "Todas as escolas"
+
+            html_rank = f"""<!DOCTYPE html>
+<html lang='pt-BR'><head><meta charset='utf-8'>
+<title>Ranking — {municipio_label} {ano_ref}</title>
+<style>
+  body{{font-family:Arial,sans-serif;padding:2rem;color:#222;max-width:1100px;margin:0 auto;}}
+  .header{{background:#1a3a5c;color:white;padding:1.5rem 2rem;border-radius:10px;
+           margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:flex-start;}}
+  .header h1{{margin:0;font-size:1.2rem;color:white;}}
+  .header p{{margin:0.3rem 0 0;font-size:0.85rem;color:#b8cfe8;}}
+  .cards{{display:flex;gap:12px;flex-wrap:wrap;margin:1rem 0;}}
+  .card{{padding:10px 18px;border-radius:8px;background:#f0f3f4;text-align:center;min-width:80px;}}
+  .card-num{{font-size:1.8rem;font-weight:bold;}}
+  .filtros{{background:#eaf0fb;border-left:4px solid #1a3a5c;padding:8px 14px;
+            border-radius:0 6px 6px 0;margin-bottom:1rem;font-size:0.85rem;color:#1a3a5c;}}
+  table{{width:100%;border-collapse:collapse;font-size:12px;margin-top:1rem;}}
+  th{{background:#1a3a5c;color:white;padding:8px;text-align:left;}}
+  td{{padding:7px 8px;border-bottom:1px solid #eee;}}
+  tr:nth-child(even){{background:#f9f9f9;}}
+  .footer{{text-align:center;font-size:11px;color:#aaa;margin-top:2rem;
+           border-top:1px solid #eee;padding-top:1rem;}}
+  @media print{{body{{padding:1rem;}}}}
+</style></head><body>
+<div class='header'>
+  <div>
+    <p style='margin:0;font-size:11px;color:#b8cfe8;text-transform:uppercase;'>Ranking de Escolas — RegDoc</p>
+    <h1>{municipio_label} · {uf_sel} · {ano_ref}</h1>
+  </div>
+  <div style='font-size:0.8rem;color:#b8cfe8;text-align:right;'>Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}</div>
+</div>
+<div class='cards'>
+  <div class='card'><div class='card-num'>{total_esc}</div><div>Total</div></div>
+  <div class='card'><div class='card-num' style='color:#c0392b'>{n_alerta}</div><div>🔴 Alerta</div></div>
+  <div class='card'><div class='card-num' style='color:#e67e22'>{n_atencao}</div><div>🟠 Atenção</div></div>
+  <div class='card'><div class='card-num' style='color:#27ae60'>{n_favoravel}</div><div>🟢 Favorável</div></div>
+</div>
+<div class='filtros'>🔍 Filtros aplicados: {filtros_txt}</div>
+<table><thead><tr>{hdrs_html}</tr></thead><tbody>{rows_html}</tbody></table>
+<div class='footer'>
+  RegDoc · Dados: Censo Escolar/INEP · retendoc.streamlit.app · {datetime.now().strftime('%d/%m/%Y')}<br>
+  Abra no navegador e use Ctrl+P para imprimir ou salvar em PDF.
+</div></body></html>"""
+
+            st.download_button(
+                label="📄 Baixar relatório (HTML)",
+                data=html_rank.encode("utf-8"),
+                file_name=f"ranking_{municipio_label}_{ano_ref}.html",
+                mime="text/html",
+            )
+
         if n_sd > 0:
             st.caption(
                 f"ℹ️ {n_sd} escola(s) sem IRD disponível para {ano_ref} — "
                 "não incluídas no ranking mas contabilizadas no total."
             )
-
         if tem_dep or tem_etapa:
             st.caption(
                 "ℹ️ Dependência administrativa e etapas de ensino baseadas no Censo Escolar 2022 "
