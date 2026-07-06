@@ -419,16 +419,24 @@ with aba2:
     tem_dep   = "NO_DEPENDENCIA" in df_esc.columns
     tem_etapa = "IN_FUND" in df_esc.columns
 
-    # ── Busca por nome (sempre visível) ───────────────────────────────────
+    # ── Busca por nome — selectbox com busca integrada ───────────────────
     filtros_ativos = []
 
-    busca_nome = st.text_input(
-        "🔎 Buscar escola pelo nome",
-        placeholder="Digite parte do nome da escola...",
+    nomes_escolas = sorted(
+        df_esc[df_esc["CO_MUNICIPIO"] == co_mun]["NO_ENTIDADE"]
+        .dropna().unique().tolist()
+    )
+    opcoes_nome = ["Todas as escolas"] + nomes_escolas
+
+    escola_nome_sel = st.selectbox(
+        "🔎 Buscar escola pelo nome (digite para filtrar a lista)",
+        options=opcoes_nome,
+        index=0,
         key="busca_escola"
     )
-    if busca_nome.strip():
-        filtros_ativos.append(f"Nome contém '{busca_nome.strip()}'")
+    busca_nome = "" if escola_nome_sel == "Todas as escolas" else escola_nome_sel
+    if busca_nome:
+        filtros_ativos.append(f"Escola: {escola_nome_sel}")
 
     # ── Filtros adicionais (dependência e etapa) ───────────────────────────
     if tem_dep or tem_etapa:
@@ -484,13 +492,9 @@ with aba2:
 
     total_mun = len(df_esc_mun)  # total antes de filtrar (para cobertura)
 
-    # Busca por nome
-    if busca_nome.strip():
-        df_esc_mun = df_esc_mun[
-            df_esc_mun["NO_ENTIDADE"].str.upper().str.contains(
-                busca_nome.strip().upper(), na=False
-            )
-        ]
+    # Filtro por nome (match exato via selectbox)
+    if busca_nome:
+        df_esc_mun = df_esc_mun[df_esc_mun["NO_ENTIDADE"] == busca_nome]
 
     # Filtro de dependência
     if tem_dep and dep_sel is not None:
