@@ -727,6 +727,83 @@ with aba2:
                 mime="text/html",
             )
 
+        # ── Exportação em lote — escolas em Alerta ─────────────────────────
+        if n_alerta > 0:
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            def gerar_zip_alerta():
+                import zipfile
+                import io as _io
+
+                df_alerta = df_esc_rank[df_esc_rank["RISCO"] == "Alerta"].copy()
+                buffer = _io.BytesIO()
+
+                with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+                    for _, r in df_alerta.iterrows():
+                        nome_esc = r["NO_ENTIDADE"]
+                        ird_esc  = r["IRD"]
+                        icg_esc  = r.get("ICG")
+                        atu_esc  = r.get("ATU")
+                        afd_esc  = r.get("AFD")
+                        ied_esc  = r.get("IED")
+                        dep_esc  = r.get("NO_DEPENDENCIA", "—") if tem_dep else "—"
+
+                        html_individual = f"""<!DOCTYPE html>
+<html lang='pt-BR'><head><meta charset='utf-8'>
+<title>{nome_esc} — {ano_ref}</title>
+<style>
+  body{{font-family:Arial,sans-serif;padding:2rem;color:#222;max-width:700px;margin:0 auto;}}
+  .header{{background:#1a3a5c;color:white;padding:1.2rem 1.6rem;border-radius:10px;margin-bottom:1.2rem;}}
+  .header h1{{margin:0;font-size:1.1rem;}}
+  .header p{{margin:0.3rem 0 0;font-size:0.8rem;color:#b8cfe8;}}
+  .ird-box{{background:#fde8e8;border:2px solid #c0392b;border-radius:10px;
+            padding:1.2rem;text-align:center;margin-bottom:1rem;}}
+  .ird-num{{font-size:2.4rem;font-weight:bold;color:#c0392b;margin:0;}}
+  table{{width:100%;border-collapse:collapse;font-size:13px;margin-top:0.8rem;}}
+  th{{background:#1a3a5c;color:white;padding:7px;text-align:left;}}
+  td{{padding:6px 7px;border-bottom:1px solid #eee;}}
+</style></head><body>
+<div class='header'>
+  <h1>{nome_esc}</h1>
+  <p>{municipio_label} · {uf_sel} · {ano_ref} · Dependência: {dep_esc}</p>
+</div>
+<div class='ird-box'>
+  <p style='margin:0;font-size:0.85rem;color:#c0392b;'>Regularidade dos professores</p>
+  <p class='ird-num'>{formatar_br(ird_esc, 3)}</p>
+  <p style='margin:0;font-weight:bold;color:#c0392b;'>● Alerta</p>
+</div>
+<table>
+  <tr><th>Indicador</th><th>Valor</th></tr>
+  <tr><td>Complexidade (ICG)</td><td>{formatar_br(icg_esc, 2) if pd.notna(icg_esc) else "—"}</td></tr>
+  <tr><td>Alunos/turma (ATU)</td><td>{formatar_br(atu_esc, 1) if pd.notna(atu_esc) else "—"}</td></tr>
+  <tr><td>Formação adequada (AFD)</td><td>{formatar_br(afd_esc, 1) if pd.notna(afd_esc) else "—"}%</td></tr>
+  <tr><td>Esforço docente (IED)</td><td>{formatar_br(ied_esc, 1) if pd.notna(ied_esc) else "—"}%</td></tr>
+</table>
+<p style='font-size:11px;color:#aaa;margin-top:1.5rem;'>
+  RegDoc · Censo Escolar/INEP · retendoc.streamlit.app<br>
+  Para orientações detalhadas por perfil, acesse a página Escola no RegDoc.
+</p>
+</body></html>"""
+                        nome_arquivo = "".join(
+                            c for c in nome_esc if c.isalnum() or c in " -_"
+                        ).strip().replace(" ", "_")[:60]
+                        zf.writestr(f"{nome_arquivo}.html", html_individual)
+
+                buffer.seek(0)
+                return buffer
+
+            zip_buffer = gerar_zip_alerta()
+            st.download_button(
+                label=f"📦 Baixar relatórios das {n_alerta} escola(s) em Alerta (ZIP)",
+                data=zip_buffer,
+                file_name=f"escolas_alerta_{municipio_label}_{ano_ref}.zip",
+                mime="application/zip",
+            )
+            st.caption(
+                "Um arquivo HTML individual por escola em Alerta — "
+                "pronto para levar em visitas técnicas ou anexar ao plano de ação."
+            )
+
         if n_sd > 0:
             st.caption(
                 f"ℹ️ {n_sd} escola(s) sem IRD disponível para {ano_ref} — "
