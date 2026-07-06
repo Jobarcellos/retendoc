@@ -97,7 +97,6 @@ TOOLTIPS = {
     ),
 }
 
-# ── Tendência ──────────────────────────────────────────────────────────────────
 # ── Carregar dados ─────────────────────────────────────────────────────────────
 st.title("🔍 Análise por Município")
 st.caption("Evolução da regularidade dos professores e comparação com médias nacionais e estaduais")
@@ -122,8 +121,8 @@ with col2:
     )
     municipio_label = st.selectbox("Município", municipios_uf["NO_MUNICIPIO"].tolist())
 
-co_mun  = municipios_uf[municipios_uf["NO_MUNICIPIO"] == municipio_label]["CO_MUNICIPIO"].iloc[0]
-df_mun  = df[df["CO_MUNICIPIO"] == co_mun].sort_values("ANO").copy()
+co_mun = municipios_uf[municipios_uf["NO_MUNICIPIO"] == municipio_label]["CO_MUNICIPIO"].iloc[0]
+df_mun = df[df["CO_MUNICIPIO"] == co_mun].sort_values("ANO").copy()
 
 if df_mun.empty:
     st.warning("Sem dados para este município.")
@@ -408,7 +407,7 @@ with aba1:
     st.caption("Abra o arquivo no navegador e use Ctrl+P para imprimir ou salvar em PDF.")
 
 # ─────────────────────────────────────────────
-# ABA 2 — Ranking de Escolas
+# ABA 2 — Ranking de Escolas com filtros
 # ─────────────────────────────────────────────
 with aba2:
     st.markdown(f"### Escolas de {municipio_label} — {ano_ref}")
@@ -419,12 +418,63 @@ with aba2:
         "🟢 Favorável = acima da média nacional."
     )
 
+    # ── Filtros de dependência e etapa ─────────────────────────────────────
+    tem_dep   = "NO_DEPENDENCIA" in df_esc.columns
+    tem_etapa = "IN_FUND" in df_esc.columns
+
+    if tem_dep or tem_etapa:
+        with st.expander("🔎 Filtrar escolas", expanded=False):
+            fc1, fc2 = st.columns(2)
+
+            if tem_dep:
+                deps_disp = sorted(
+                    df_esc[df_esc["CO_MUNICIPIO"] == co_mun]["NO_DEPENDENCIA"]
+                    .dropna().unique().tolist()
+                )
+                dep_sel = fc1.multiselect(
+                    "Dependência administrativa",
+                    options=deps_disp,
+                    default=deps_disp,
+                    help="Municipal, Estadual, Privada ou Federal"
+                )
+            else:
+                dep_sel = None
+
+            if tem_etapa:
+                etapa_sel = fc2.multiselect(
+                    "Etapa de ensino oferecida",
+                    options=["Educação Infantil", "Ensino Fundamental", "Ensino Médio"],
+                    default=[],
+                    help="Selecione uma ou mais etapas. Vazio = todas as escolas."
+                )
+            else:
+                etapa_sel = []
+
+    # ── Dados do município no ano ───────────────────────────────────────────
     df_esc_mun = df_esc[
         (df_esc["CO_MUNICIPIO"] == co_mun) & (df_esc["ANO"] == ano_ref)
     ].copy()
 
+    # Aplicar filtro de dependência
+    if tem_dep and dep_sel is not None:
+        df_esc_mun = df_esc_mun[df_esc_mun["NO_DEPENDENCIA"].isin(dep_sel)]
+
+    # Aplicar filtro de etapa
+    if tem_etapa and etapa_sel:
+        mapa_etapa = {
+            "Educação Infantil":   "IN_INF",
+            "Ensino Fundamental":  "IN_FUND",
+            "Ensino Médio":        "IN_MED",
+        }
+        mascara = pd.Series(False, index=df_esc_mun.index)
+        for etapa in etapa_sel:
+            col_etapa = mapa_etapa[etapa]
+            if col_etapa in df_esc_mun.columns:
+                mascara = mascara | (df_esc_mun[col_etapa] == 1)
+        df_esc_mun = df_esc_mun[mascara]
+
     if df_esc_mun.empty:
-        st.info("Dados por escola não disponíveis para este município e ano.")
+        st.info("Nenhuma escola encontrada com os filtros selecionados.")
     else:
         df_esc_rank = df_esc_mun.dropna(subset=["IRD"]).copy()
         n_sd = len(df_esc_mun) - len(df_esc_rank)
@@ -432,9 +482,9 @@ with aba2:
         CORES_ESC = {"Alerta":"#c0392b","Atenção":"#e67e22","Favorável":"#27ae60"}
 
         def classif_esc(v):
-            if pd.isna(v):             return "Sem dados"
-            if pd.notna(media_ird_nac) and v >= media_ird_nac: return "Favorável"
-            if pd.notna(ird) and v >= ird:                      return "Atenção"
+            if pd.isna(v):                                          return "Sem dados"
+            if pd.notna(media_ird_nac) and v >= media_ird_nac:     return "Favorável"
+            if pd.notna(ird) and v >= ird:                          return "Atenção"
             return "Alerta"
 
         ORDEM_ESC = {"Alerta":0,"Atenção":1,"Favorável":2,"Sem dados":3}
@@ -493,6 +543,8 @@ with aba2:
 
         # Tabela
         cols_base  = ["NO_ENTIDADE","IRD","RISCO"]
+        if tem_dep:
+            cols_base.append("NO_DEPENDENCIA")
         cols_extra = [c for c in ["ICG","ATU","AFD","IED"] if c in df_esc_rank.columns]
 
         df_tab_esc = df_esc_rank[cols_base + cols_extra].copy()
@@ -503,8 +555,14 @@ with aba2:
                     lambda x: formatar_br(x, dec) if pd.notna(x) else "—"
                 )
         df_tab_esc = df_tab_esc.rename(columns={
-            "NO_ENTIDADE":"Escola","IRD":"Regularidade","ICG":"Complexidade",
-            "ATU":"Alunos/turma","AFD":"Formação (%)","IED":"Esforço docente (%)","RISCO":"Situação"
+            "NO_ENTIDADE":    "Escola",
+            "IRD":            "Regularidade",
+            "RISCO":          "Situação",
+            "NO_DEPENDENCIA": "Dependência",
+            "ICG":            "Complexidade",
+            "ATU":            "Alunos/turma",
+            "AFD":            "Formação (%)",
+            "IED":            "Esforço docente (%)",
         })
         df_tab_esc.index = df_tab_esc.index + 1
         df_tab_esc.index.name = "Posição"
@@ -525,6 +583,12 @@ with aba2:
             st.caption(
                 f"ℹ️ {n_sd} escola(s) sem IRD disponível para {ano_ref} — "
                 "não incluídas no ranking mas contabilizadas no total."
+            )
+
+        if tem_dep or tem_etapa:
+            st.caption(
+                "ℹ️ Dependência administrativa e etapas de ensino baseadas no Censo Escolar 2022 "
+                "e aplicadas como referência para toda a série histórica."
             )
 
 st.markdown("---")
