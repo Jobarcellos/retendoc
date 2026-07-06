@@ -3,7 +3,7 @@ import numpy as np
 import streamlit as st
 
 # Identidade e versionamento do artefato (exibidos na página Metodologia)
-VERSAO_APP = "1.1"
+VERSAO_APP = "1.2"
 FONTE_DADOS = "Indicadores Educacionais do Censo Escolar — Inep/MEC"
 COBERTURA = "5.570 municípios (2013–2025) e 209 mil+ escolas (2019–2025)"
 
@@ -11,6 +11,72 @@ COBERTURA = "5.570 municípios (2013–2025) e 209 mil+ escolas (2019–2025)"
 def aplicar_estilo_global():
     st.markdown("""
     <style>
+        /* ══════════════ TIPOGRAFIA E BASE PROFISSIONAL ══════════════ */
+        html, body, [class*="css"] {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont,
+                         'Helvetica Neue', Arial, sans-serif !important;
+            -webkit-font-smoothing: antialiased;
+        }
+        h1 { letter-spacing: -0.02em !important; font-weight: 700 !important; }
+        h2, h3 { letter-spacing: -0.01em !important; font-weight: 650 !important;
+                 color: #1a3a5c !important; }
+        p, li { line-height: 1.65 !important; }
+
+        /* Métricas com visual refinado */
+        [data-testid="stMetric"] {
+            background: #ffffff;
+            border: 1px solid #e6ecf3;
+            border-radius: 10px;
+            padding: 0.9rem 1.1rem;
+            box-shadow: 0 1px 3px rgba(26,58,92,0.06);
+        }
+        [data-testid="stMetricLabel"] {
+            font-size: 0.8rem !important;
+            color: #5a7a9a !important;
+            font-weight: 600 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        [data-testid="stMetricValue"] {
+            color: #1a3a5c !important;
+            font-weight: 700 !important;
+        }
+
+        /* Botões */
+        .stButton > button, .stDownloadButton > button {
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            border: 1.5px solid #1a3a5c !important;
+            color: #1a3a5c !important;
+            transition: all 0.15s ease !important;
+        }
+        .stButton > button:hover, .stDownloadButton > button:hover {
+            background: #1a3a5c !important;
+            color: white !important;
+            box-shadow: 0 2px 8px rgba(26,58,92,0.25) !important;
+        }
+
+        /* Selectbox / inputs mais suaves */
+        [data-baseweb="select"] > div,
+        .stTextInput > div > div {
+            border-radius: 8px !important;
+        }
+
+        /* Expanders com destaque sutil */
+        [data-testid="stExpander"] {
+            border: 1px solid #e6ecf3 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 1px 3px rgba(26,58,92,0.05);
+        }
+
+        /* Tabelas */
+        [data-testid="stDataFrame"] {
+            border: 1px solid #e6ecf3;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        /* ══════════════ SIDEBAR ══════════════ */
         [data-testid="stSidebar"] {
             background-color: #1a3a5c !important;
         }
@@ -51,6 +117,75 @@ def aplicar_estilo_global():
         section[data-testid="stSidebar"] hr {
             border-color: rgba(255,255,255,0.15) !important;
         }
+
+        /* ══════════════ MOBILE (≤ 768px) ══════════════ */
+        @media (max-width: 768px) {
+
+            /* Reduz padding geral do conteúdo */
+            .block-container {
+                padding-left: 0.8rem !important;
+                padding-right: 0.8rem !important;
+                padding-top: 1.5rem !important;
+            }
+
+            /* Títulos proporcionais à tela */
+            h1 { font-size: 1.5rem !important; }
+            h2 { font-size: 1.25rem !important; }
+            h3 { font-size: 1.1rem !important; }
+
+            /* Colunas empilham verticalmente */
+            [data-testid="stHorizontalBlock"] {
+                flex-direction: column !important;
+            }
+            [data-testid="stHorizontalBlock"] > div {
+                width: 100% !important;
+                min-width: 100% !important;
+                margin-bottom: 0.5rem;
+            }
+
+            /* Métricas compactas */
+            [data-testid="stMetric"] {
+                padding: 0.6rem 0.8rem;
+            }
+            [data-testid="stMetricValue"] {
+                font-size: 1.4rem !important;
+            }
+
+            /* Tabelas com scroll horizontal */
+            [data-testid="stDataFrame"] {
+                overflow-x: auto !important;
+            }
+
+            /* Abas com fonte menor para caber */
+            div[data-testid="stTabs"] button {
+                font-size: 0.8rem !important;
+                padding: 0.5rem 0.8rem !important;
+                letter-spacing: 0 !important;
+            }
+
+            /* Gráficos plotly ocupam largura total */
+            .js-plotly-plot {
+                width: 100% !important;
+            }
+
+            /* Botões de download em largura total */
+            .stDownloadButton > button,
+            .stButton > button {
+                width: 100% !important;
+            }
+        }
+
+        /* ══════════════ TELAS MUITO PEQUENAS (≤ 480px) ══════════════ */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.3rem !important; }
+            [data-testid="stMetricValue"] {
+                font-size: 1.2rem !important;
+            }
+            .block-container {
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
+            }
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -75,11 +210,14 @@ def carregar_escola():
     df["SG_UF"] = df["SG_UF"].fillna("??")
     df["NO_ENTIDADE"] = df["NO_ENTIDADE"].fillna("Escola não identificada")
     return df
+
+
 @st.cache_data
 def carregar_saeb():
     df = pd.read_parquet("saeb_escola_consolidado.parquet")
     df["CO_ENTIDADE"] = df["CO_ENTIDADE"].astype(str).str.replace(r"\.0$", "", regex=True)
     return df
+
 
 def classificar_risco(ird, media_nacional):
     if pd.isna(ird) or pd.isna(media_nacional):
