@@ -5,7 +5,7 @@ import streamlit as st
 # Identidade e versionamento do artefato (exibidos na página Metodologia)
 VERSAO_APP = "1.2"
 FONTE_DADOS = "Indicadores Educacionais do Censo Escolar — Inep/MEC"
-COBERTURA = "5.570 municípios e 209 mil+ escolas — série histórica de 2013 a 2025"
+COBERTURA = "5.570 municípios (2013–2025) e 209 mil+ escolas (2019–2025)"
 
 
 def aplicar_estilo_global():
@@ -41,6 +41,37 @@ def aplicar_estilo_global():
             color: #1a3a5c !important;
             font-weight: 700 !important;
         }
+
+
+        /* ══════════════ RESPONSIVIDADE (celular e tablet) ══════════════ */
+        /* Tablets e telas médias (até 1024px) */
+        @media (max-width: 1024px) {
+            .block-container {
+                padding-left: 1.2rem !important;
+                padding-right: 1.2rem !important;
+            }
+            [data-testid="stMetric"] { padding: 0.6rem 0.7rem !important; }
+            [data-testid="stMetricValue"] { font-size: 1.35rem !important; }
+            [data-testid="stMetricLabel"] { font-size: 0.68rem !important; }
+            h1 { font-size: 1.5rem !important; }
+            h2, h3 { font-size: 1.15rem !important; }
+            .num-card p:first-child { font-size: 1.4rem !important; }
+        }
+        /* Celulares (até 640px) */
+        @media (max-width: 640px) {
+            .block-container {
+                padding-left: 0.8rem !important;
+                padding-right: 0.8rem !important;
+            }
+            [data-testid="stMetricValue"] { font-size: 1.15rem !important; }
+            h1 { font-size: 1.25rem !important; }
+            .num-card { border-right: none !important; }
+            /* tabelas: rolagem horizontal em vez de corte */
+            [data-testid="stDataFrame"] { overflow-x: auto !important; }
+        }
+        /* Cards numéricos da home: flexíveis em qualquer largura */
+        .num-card { text-align: center; padding: 1rem; min-width: 0; }
+        .num-card p { margin: 0; overflow-wrap: break-word; }
 
         /* Botões */
         .stButton > button, .stDownloadButton > button {
