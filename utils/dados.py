@@ -73,6 +73,15 @@ def aplicar_estilo_global():
         .num-card { text-align: center; padding: 1rem; min-width: 0; }
         .num-card p { margin: 0; overflow-wrap: break-word; }
 
+
+        /* Rodapé institucional */
+        .rodape-regdoc { text-align: center; padding: 0.4rem 0 1rem; }
+        .rodape-regdoc p { font-size: 0.78rem !important; color: #8aa0b5 !important;
+                           margin: 0.15rem 0 !important; line-height: 1.5 !important; }
+        @media (max-width: 640px) {
+            .rodape-regdoc p { font-size: 0.7rem !important; }
+        }
+
         /* Botões */
         .stButton > button, .stDownloadButton > button {
             border-radius: 8px !important;
@@ -371,6 +380,18 @@ def municipal_por_rede(rede):
                    SG_UF=("SG_UF", "first"))
               .reset_index())
     return agg
+
+
+# ── Rodapé institucional (usado por todas as páginas) ──────────────────────────
+def rodape_institucional():
+    st.markdown("---")
+    st.markdown("""
+    <div class="rodape-regdoc">
+        <p><strong>RegDoc — Regularidade Docente</strong> · Fonte: Censo Escolar / Inep · Dados públicos, uso gratuito.</p>
+        <p>© 2026 <strong>Joelma Barcellos Santanna</strong> · Desenvolvido no Doutorado Profissional em
+        Administração e Contabilidade — linha Gestão Escolar — FUCAPE Business School.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 def formatar_br(valor, casas=3):
