@@ -100,7 +100,7 @@ st.markdown("""
   escola) e consolidação da série histórica em base única.
 - **Atualização:** manual, a cada divulgação anual do Censo Escolar. A versão dos
   dados vigente está indicada no topo desta página.
-- **Cobertura:** série municipal de 2013 a 2025; série escolar de 2019 a 2025.
+- **Cobertura:** séries municipal e escolar de 2013 a 2025.
   Escolas criadas recentemente ou com histórico incompleto no Censo podem
   apresentar anos ausentes — nesses casos, desconfie de "quedas" em séries curtas.
 """)
