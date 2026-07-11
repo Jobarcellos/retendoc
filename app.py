@@ -25,11 +25,13 @@ ano_atual, n_alerta, _df_ano_home, _ufs_home = _dados_home()
 
 # ── Alerta por estado (opcional, leve) ─────────────────────────────────────────
 def _n_alerta_uf(uf_sel):
+    """Conta municípios da UF em alerta usando a MÉDIA NACIONAL (mesmo critério da página Ranking)."""
     df_uf = _df_ano_home[_df_ano_home["SG_UF"] == uf_sel]
     if df_uf.empty:
         return None
-    media_uf = df_uf["IRD"].mean()
-    return int((df_uf["IRD"] < media_uf * 0.85).sum()), len(df_uf)
+    media_nac = _df_ano_home["IRD"].mean()
+    df_alerta = df_uf[df_uf["IRD"] < media_nac * 0.85].sort_values("IRD")
+    return len(df_alerta), len(df_uf), df_alerta
 
 
 # ── Estilos globais ───────────────────────────────────────────────────────────
@@ -146,7 +148,7 @@ with col_card:
     if uf_home_sel != "Selecione...":
         resultado_uf = _n_alerta_uf(uf_home_sel)
         if resultado_uf:
-            n_alerta_uf, total_uf = resultado_uf
+            n_alerta_uf, total_uf, df_alerta_uf = resultado_uf
             pct_uf = round(n_alerta_uf / total_uf * 100, 1) if total_uf > 0 else 0
             cor_uf = "#c0392b" if pct_uf >= 20 else "#e67e22" if pct_uf >= 10 else "#27ae60"
             st.markdown(f"""
@@ -155,8 +157,28 @@ with col_card:
                 <span style="color:{cor_uf}; font-weight:600;">{uf_home_sel}:</span>
                 <span style="color:#333;"> {n_alerta_uf} de {total_uf} municípios em alerta ({pct_uf}%)</span>
             </div>""", unsafe_allow_html=True)
-            st.session_state["uf_deep_link"] = uf_home_sel
-            st.page_link("pages/2_Municipio.py", label=f"Ver detalhes de {uf_home_sel} →")
+
+            if n_alerta_uf > 0:
+                with st.expander(f"Ver os {n_alerta_uf} municípios em alerta em {uf_home_sel}"):
+                    df_lista = df_alerta_uf[["NO_MUNICIPIO", "IRD"]].copy()
+                    df_lista["IRD"] = df_lista["IRD"].round(3)
+                    df_lista = df_lista.rename(columns={
+                        "NO_MUNICIPIO": "Município",
+                        "IRD": "Regularidade (IRD)"
+                    })
+                    st.dataframe(df_lista, use_container_width=True, hide_index=True)
+                    st.caption(
+                        "Alerta = regularidade abaixo de 85% da média nacional "
+                        "— mesmo critério da página Ranking."
+                    )
+            else:
+                st.caption(f"Nenhum município de {uf_home_sel} está em alerta neste ano. 🎉")
+
+            st.session_state["uf_rank_deep_link"] = uf_home_sel
+            st.page_link(
+                "pages/3_Ranking.py",
+                label=f"Ver análise completa de {uf_home_sel} no Ranking →"
+            )
 
 # ── Cards de navegação ─────────────────────────────────────────────────────────
 st.markdown("---")
