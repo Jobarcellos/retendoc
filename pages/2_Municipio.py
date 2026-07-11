@@ -1254,6 +1254,5 @@ with aba2:
                 "como referência para toda a série histórica."
             )
 
-st.markdown("---")
-st.caption("RegDoc · Fonte: Censo Escolar / INEP · Atualização anual mediante publicação do Censo Escolar.")
-st.caption("© 2026 Joelma Barcellos Santanna · Doutorado Profissional em Administração, FUCAPE Business School.")
+from utils.dados import rodape_institucional
+rodape_institucional()
