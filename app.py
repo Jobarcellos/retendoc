@@ -153,9 +153,10 @@ with col_card:
             <div style="background:{cor_uf}15; border-left:4px solid {cor_uf};
                  padding:0.7rem 1.2rem; border-radius:0 8px 8px 0; margin-top:0.3rem;">
                 <span style="color:{cor_uf}; font-weight:600;">{uf_home_sel}:</span>
-                <span style="color:#333;"> {n_alerta_uf} de {total_uf} municípios em alerta ({pct_uf}%)
-                — <a href="pages/2_Municipio.py" target="_self" style="color:{cor_uf};">ver detalhes →</a></span>
+                <span style="color:#333;"> {n_alerta_uf} de {total_uf} municípios em alerta ({pct_uf}%)</span>
             </div>""", unsafe_allow_html=True)
+            st.session_state["uf_deep_link"] = uf_home_sel
+            st.page_link("pages/2_Municipio.py", label=f"Ver detalhes de {uf_home_sel} →")
 
 # ── Cards de navegação ─────────────────────────────────────────────────────────
 st.markdown("---")
