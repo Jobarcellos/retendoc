@@ -313,3 +313,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+from utils.dados import rodape_institucional
+rodape_institucional()
