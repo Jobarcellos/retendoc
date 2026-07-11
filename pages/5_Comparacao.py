@@ -514,3 +514,6 @@ with st.expander("ℹ️ Como interpretar as comparações"):
 
     **Fonte:** Censo Escolar da Educação Básica — INEP/MEC. Dados públicos, uso gratuito e irrestrito.
     """)
+
+from utils.dados import rodape_institucional
+rodape_institucional()
