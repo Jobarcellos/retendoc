@@ -58,7 +58,9 @@ with col1:
     ano_sel = st.selectbox("Ano", anos_disp, index=len(anos_disp) - 1)
 with col2:
     ufs = ["Todos os estados"] + sorted(df["SG_UF"].dropna().unique())
-    uf_sel = st.selectbox("Estado", ufs)
+    _uf_link = st.session_state.pop("uf_rank_deep_link", None)
+    _idx_uf = ufs.index(_uf_link) if _uf_link in ufs else 0
+    uf_sel = st.selectbox("Estado", ufs, index=_idx_uf)
 with col3:
     n_top = st.slider("Municípios no ranking", 10, 100, 30)
 
