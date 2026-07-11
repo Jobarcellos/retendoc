@@ -1,7 +1,7 @@
 import streamlit as st
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils.dados import carregar_municipal
+from utils.dados import carregar_municipal, calcular_anos_em_alerta, rotulo_cronicidade
 
 st.set_page_config(
     page_title="RegDoc — Regularidade Docente",
@@ -160,16 +160,25 @@ with col_card:
 
             if n_alerta_uf > 0:
                 with st.expander(f"Ver os {n_alerta_uf} municípios em alerta em {uf_home_sel}"):
-                    df_lista = df_alerta_uf[["NO_MUNICIPIO", "IRD"]].copy()
+                    cron = calcular_anos_em_alerta(ano_atual)
+                    df_lista = df_alerta_uf[["CO_MUNICIPIO", "NO_MUNICIPIO", "IRD"]].copy()
+                    df_lista = df_lista.merge(cron, on="CO_MUNICIPIO", how="left")
                     df_lista["IRD"] = df_lista["IRD"].round(3)
-                    df_lista = df_lista.rename(columns={
-                        "NO_MUNICIPIO": "Município",
-                        "IRD": "Regularidade (IRD)"
-                    })
+                    df_lista["HÁ QUANTO TEMPO"] = df_lista["ANOS_EM_ALERTA"].apply(rotulo_cronicidade)
+                    df_lista = (df_lista
+                                .sort_values("ANOS_EM_ALERTA", ascending=False)
+                                [["NO_MUNICIPIO", "IRD", "HÁ QUANTO TEMPO"]]
+                                .rename(columns={
+                                    "NO_MUNICIPIO": "Município",
+                                    "IRD": "Regularidade (IRD)",
+                                    "HÁ QUANTO TEMPO": "Há quanto tempo em alerta"
+                                }))
                     st.dataframe(df_lista, use_container_width=True, hide_index=True)
                     st.caption(
-                        "Alerta = regularidade abaixo de 85% da média nacional "
-                        "— mesmo critério da página Ranking."
+                        "Alerta = regularidade abaixo de 85% da média nacional do ano "
+                        "— mesmo critério da página Ranking. A contagem de anos considera "
+                        "anos consecutivos em alerta até o ano mais recente: alertas "
+                        "prolongados indicam problema estrutural, não episódico."
                     )
             else:
                 st.caption(f"Nenhum município de {uf_home_sel} está em alerta neste ano. 🎉")
