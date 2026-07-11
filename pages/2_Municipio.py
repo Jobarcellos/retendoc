@@ -113,7 +113,9 @@ df_esc = load_escolas()
 col1, col2 = st.columns([1, 2])
 with col1:
     ufs = sorted(df["SG_UF"].dropna().unique())
-    uf_sel = st.selectbox("Estado", ufs, index=ufs.index("ES") if "ES" in ufs else 0)
+   _uf_default = st.session_state.pop("uf_deep_link", None)
+_idx_default = ufs.index(_uf_default) if _uf_default in ufs else (ufs.index("ES") if "ES" in ufs else 0)
+uf_sel = st.selectbox("Estado", ufs, index=_idx_default)
 with col2:
     municipios_uf = (
         df[df["SG_UF"] == uf_sel][["CO_MUNICIPIO","NO_MUNICIPIO"]]
