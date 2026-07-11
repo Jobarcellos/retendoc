@@ -112,26 +112,26 @@ st.markdown("""
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.markdown("""
-    <div style="text-align:center; padding:1rem; border-right:1px solid #eee;">
-        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c; margin:0;">5.570</p>
+    <div class="num-card" style="border-right:1px solid #eee;">
+        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c;">5.570</p>
         <p style="font-size:0.85rem; color:#777; margin:0;">municípios monitorados</p>
     </div>""", unsafe_allow_html=True)
 with col2:
     st.markdown("""
-    <div style="text-align:center; padding:1rem; border-right:1px solid #eee;">
-        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c; margin:0;">209 mil</p>
+    <div class="num-card" style="border-right:1px solid #eee;">
+        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c;">209 mil</p>
         <p style="font-size:0.85rem; color:#777; margin:0;">escolas acompanhadas</p>
     </div>""", unsafe_allow_html=True)
 with col3:
     st.markdown("""
-    <div style="text-align:center; padding:1rem; border-right:1px solid #eee;">
-        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c; margin:0;">13 anos</p>
+    <div class="num-card" style="border-right:1px solid #eee;">
+        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c;">13 anos</p>
         <p style="font-size:0.85rem; color:#777; margin:0;">de série histórica</p>
     </div>""", unsafe_allow_html=True)
 with col4:
     st.markdown(f"""
-    <div style="text-align:center; padding:1rem;">
-        <p style="font-size:2rem; font-weight:bold; color:#c0392b; margin:0;">{n_alerta}</p>
+    <div class="num-card">
+        <p style="font-size:2rem; font-weight:bold; color:#c0392b;">{n_alerta}</p>
         <p style="font-size:0.85rem; color:#777; margin:0;">municípios em alerta ({ano_atual})</p>
     </div>""", unsafe_allow_html=True)
 
