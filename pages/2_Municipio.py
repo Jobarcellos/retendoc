@@ -8,7 +8,8 @@ import plotly.graph_objects as go
 from datetime import datetime
 from utils.dados import (carregar_municipal, carregar_escola, formatar_br,
                          aplicar_estilo_global, classificar_tendencia,
-                         render_tendencia, sombrear_pandemia)
+                         render_tendencia, sombrear_pandemia, tabela_pares,
+                         municipal_por_rede, REDES_DISPONIVEIS)
 
 st.set_page_config(page_title="Município · RegDoc", layout="wide")
 
@@ -110,19 +111,34 @@ def load_escolas():
 df_esc = load_escolas()
 
 # ── Filtros compartilhados ─────────────────────────────────────────────────────
-col1, col2 = st.columns([1, 2])
+col1, col2, col3f = st.columns([1, 2, 1])
 with col1:
     ufs = sorted(df["SG_UF"].dropna().unique())
     _uf_default = st.session_state.pop("uf_deep_link", None)
     _idx_default = ufs.index(_uf_default) if _uf_default in ufs else (ufs.index("ES") if "ES" in ufs else 0)
     uf_sel = st.selectbox("Estado", ufs, index=_idx_default)
+with col3f:
+    rede_sel = st.selectbox(
+        "Rede",
+        REDES_DISPONIVEIS,
+        index=0,
+        help="Escolha quais escolas entram no cálculo: todas as do município "
+             "ou apenas as da rede municipal, estadual ou privada."
+    )
+
+if rede_sel != "Todas as redes":
+    df = municipal_por_rede(rede_sel)
+    st.info(
+        f"📌 Analisando apenas a **rede {rede_sel.lower()}** deste município. "
+        "Médias nacional e estadual também consideram somente essa rede."
+    )
+
 with col2:
     municipios_uf = (
         df[df["SG_UF"] == uf_sel][["CO_MUNICIPIO","NO_MUNICIPIO"]]
         .drop_duplicates().sort_values("NO_MUNICIPIO")
     )
     municipio_label = st.selectbox("Município", municipios_uf["NO_MUNICIPIO"].tolist())
-
 co_mun = municipios_uf[municipios_uf["NO_MUNICIPIO"] == municipio_label]["CO_MUNICIPIO"].iloc[0]
 df_mun = df[df["CO_MUNICIPIO"] == co_mun].sort_values("ANO").copy()
 
@@ -133,7 +149,11 @@ if df_mun.empty:
 ano_ref = st.selectbox("Ano de referência", sorted(df_mun["ANO"].unique()),
                        index=len(df_mun["ANO"].unique()) - 1)
 
-linha_atual   = df_mun[df_mun["ANO"] == ano_ref].iloc[0]
+_sel_ano = df_mun[df_mun["ANO"] == ano_ref]
+if _sel_ano.empty:
+    st.warning(f"Sem dados da rede selecionada para {municipio_label} em {ano_ref}.")
+    st.stop()
+linha_atual   = _sel_ano.iloc[0]
 media_ird_nac = df[df["ANO"] == ano_ref]["IRD"].mean()
 media_ird_uf  = df[(df["ANO"] == ano_ref) & (df["SG_UF"] == uf_sel)]["IRD"].mean()
 ird           = linha_atual["IRD"]
@@ -270,6 +290,107 @@ with aba1:
             </div>
             <div style="font-size:1.6rem; font-weight:bold; color:#1a3a5c;">{formatar_br(linha_atual['ICG'],1)}</div>
         </div>""", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("### Como seu município está entre os parecidos com ele?")
+    st.caption(
+        "Comparar com a média nacional mistura realidades muito diferentes. "
+        "Aqui a comparação é só entre municípios de porte e complexidade semelhantes."
+    )
+
+    df_pares_full, ano_porte = tabela_pares(ano_ref, rede_sel)
+    linha_par = df_pares_full[df_pares_full["CO_MUNICIPIO"] == co_mun]
+
+    if linha_par.empty:
+        st.info("Sem dados de complexidade (ICG) para este município neste ano — comparação entre pares indisponível.")
+    else:
+        faixa_icg   = linha_par["FAIXA_ICG"].iloc[0]
+        faixa_porte = linha_par["FAIXA_PORTE"].iloc[0]
+        pares = df_pares_full[
+            (df_pares_full["FAIXA_ICG"] == faixa_icg) &
+            (df_pares_full["FAIXA_PORTE"] == faixa_porte)
+        ].dropna(subset=["IRD"]).copy()
+
+        n_grupo = len(pares)
+        if n_grupo < 10:
+            st.info("Grupo de comparação muito pequeno neste ano para uma leitura confiável.")
+        else:
+            pares = pares.sort_values("IRD", ascending=False).reset_index(drop=True)
+            posicao = int(pares.index[pares["CO_MUNICIPIO"] == co_mun][0]) + 1
+            media_grupo = pares["IRD"].mean()
+            dif_grupo = ird - media_grupo if pd.notna(ird) else None
+
+            cp1, cp2, cp3 = st.columns(3)
+            cp1.metric(
+                "Grupo de comparação",
+                f"{n_grupo} municípios",
+                help=f"Municípios com {faixa_icg} e {faixa_porte} (redes municipais). "
+                     f"Porte medido em {ano_porte}."
+            )
+            cp2.metric(
+                "Posição do seu município",
+                f"{posicao}º de {n_grupo}",
+                help="1º lugar = maior regularidade dos professores dentro do grupo."
+            )
+            cp3.metric(
+                "Média do grupo",
+                formatar_br(media_grupo),
+                delta=(f"{dif_grupo:+.3f}".replace(".", ",") if dif_grupo is not None else None),
+                help="Diferença entre o IRD do seu município e a média dos municípios parecidos."
+            )
+
+            pct_frente = (n_grupo - posicao) / (n_grupo - 1) * 100 if n_grupo > 1 else 0
+            if posicao <= max(1, int(n_grupo * 0.25)):
+                msg = (f"**{municipio_label} está entre os 25% melhores do seu grupo.** "
+                       "Contexto parecido, resultado acima — vale documentar o que a rede faz de diferente.")
+            elif dif_grupo is not None and dif_grupo < 0:
+                msg = (f"**{municipio_label} está abaixo da média de municípios parecidos** "
+                       f"(à frente de apenas {pct_frente:.0f}% do grupo). "
+                       "Como o contexto é semelhante, a diferença dificilmente se explica por porte ou complexidade — "
+                       "há espaço real de melhoria na retenção dos professores.")
+            else:
+                msg = (f"**{municipio_label} está próximo da média de municípios parecidos** "
+                       f"(à frente de {pct_frente:.0f}% do grupo).")
+            st.markdown(msg)
+
+            fig_par = go.Figure()
+            fig_par.add_trace(go.Histogram(
+                x=pares["IRD"], nbinsx=30,
+                marker_color="#b8cfe8", name="Municípios do grupo"
+            ))
+            if pd.notna(ird):
+                fig_par.add_vline(x=float(ird), line_color="#c0392b", line_width=3,
+                                  annotation_text=municipio_label,
+                                  annotation_position="top")
+            fig_par.add_vline(x=float(media_grupo), line_dash="dash", line_color="#333",
+                              annotation_text="média do grupo",
+                              annotation_position="bottom right")
+            fig_par.update_layout(
+                height=280, showlegend=False,
+                margin=dict(l=20, r=20, t=30, b=20),
+                xaxis_title="Regularidade dos professores (0 a 5)",
+                yaxis_title="Nº de municípios"
+            )
+            st.plotly_chart(fig_par, use_container_width=True)
+
+            with st.expander("🏅 Quem são os destaques do seu grupo? (para trocar experiências)"):
+                top5 = pares.head(5)[["NO_MUNICIPIO", "SG_UF", "IRD", "N_ESCOLAS"]].copy()
+                top5["IRD"] = top5["IRD"].round(3)
+                top5 = top5.rename(columns={
+                    "NO_MUNICIPIO": "Município", "SG_UF": "Estado",
+                    "IRD": "Regularidade (IRD)", "N_ESCOLAS": "Escolas municipais"
+                })
+                st.dataframe(top5, use_container_width=True, hide_index=True)
+                st.caption(
+                    "Municípios com contexto parecido e melhor resultado são a melhor "
+                    "fonte de práticas replicáveis — mais útil que comparar com capitais "
+                    "ou redes de porte muito diferente."
+                )
+            if ano_porte != ano_ref:
+                st.caption(
+                    f"Nota: o porte da rede (nº de escolas) foi medido em {ano_porte}, "
+                    f"ano mais próximo com dados de escolas disponíveis."
+                )
 
     st.markdown("---")
     st.markdown("### Evolução da regularidade dos professores")
