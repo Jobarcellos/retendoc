@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global, classificar_risco
+from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global, classificar_risco, calcular_anos_em_alerta, rotulo_cronicidade
 
 st.set_page_config(page_title="Ranking · RegDoc", layout="wide")
 
@@ -130,7 +130,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-df_tabela = df_rank.head(n_top)[["NO_MUNICIPIO","SG_UF","IRD","ATU","AFD","IED","ICG","RISCO"]].copy()
+cron = calcular_anos_em_alerta(ano_sel)
+df_rank = df_rank.merge(cron, on="CO_MUNICIPIO", how="left")
+df_rank["CRONICIDADE"] = df_rank["ANOS_EM_ALERTA"].apply(rotulo_cronicidade)
+
+df_tabela = df_rank.head(n_top)[["NO_MUNICIPIO","SG_UF","IRD","CRONICIDADE","ATU","AFD","IED","ICG","RISCO"]].copy()
 df_tabela["IRD"] = df_tabela["IRD"].apply(lambda x: formatar_br(x, 3))
 df_tabela["ATU"] = df_tabela["ATU"].apply(lambda x: formatar_br(x, 1))
 df_tabela["AFD"] = df_tabela["AFD"].apply(lambda x: formatar_br(x, 1))
@@ -138,7 +142,8 @@ df_tabela["IED"] = df_tabela["IED"].apply(lambda x: formatar_br(x, 1))
 df_tabela["ICG"] = df_tabela["ICG"].apply(lambda x: formatar_br(x, 2))
 df_tabela = df_tabela.rename(columns={
     "NO_MUNICIPIO":"Município","SG_UF":"Estado",
-    "IRD":"Regularidade","ATU":"Alunos/turma",
+    "IRD":"Regularidade","CRONICIDADE":"Há quanto tempo em alerta",
+    "ATU":"Alunos/turma",
     "AFD":"Formação (%)","IED":"Esforço docente (%)","ICG":"Complexidade","RISCO":"Situação"
 })
 st.dataframe(df_tabela, use_container_width=True, hide_index=True)
