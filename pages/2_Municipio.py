@@ -393,6 +393,88 @@ with aba1:
                 )
 
     st.markdown("---")
+    st.markdown("### Onde a irregularidade se concentra na sua rede?")
+    st.caption(
+        "A média do município esconde diferenças internas. Veja em que tipo de "
+        "escola a permanência dos professores está mais frágil — é lá que a ação começa."
+    )
+
+    esc_mun = df_esc[(df_esc["CO_MUNICIPIO"] == co_mun) & (df_esc["ANO"] == ano_ref)].copy()
+    if rede_sel != "Todas as redes":
+        esc_mun = esc_mun[esc_mun["NO_DEPENDENCIA"].astype(str) == rede_sel]
+    esc_mun = esc_mun.dropna(subset=["IRD"])
+
+    if len(esc_mun) < 3:
+        st.info("Poucas escolas com dados neste recorte para uma leitura por segmento.")
+    else:
+        media_rede_local = esc_mun["IRD"].mean()
+
+        segmentos = []
+        # Por localização
+        for zona in ["Urbana", "Rural"]:
+            grupo = esc_mun[esc_mun["TP_LOCALIZACAO"] == zona]
+            if len(grupo) > 0:
+                segmentos.append(("📍 " + ("Escolas urbanas" if zona == "Urbana" else "Escolas rurais"),
+                                  grupo["IRD"].mean(), len(grupo)))
+        # Por etapa ofertada
+        for flag, nome in [("IN_INF", "🧸 Com educação infantil"),
+                           ("IN_FUND", "📚 Com ensino fundamental"),
+                           ("IN_MED", "🎓 Com ensino médio")]:
+            grupo = esc_mun[esc_mun[flag] == 1]
+            if len(grupo) > 0:
+                segmentos.append((nome, grupo["IRD"].mean(), len(grupo)))
+
+        if not segmentos:
+            st.info("Sem informações de localização e etapa para as escolas deste recorte.")
+        else:
+            df_seg = pd.DataFrame(segmentos, columns=["Segmento", "IRD", "N"])
+            df_seg["DIF"] = df_seg["IRD"] - media_rede_local
+
+            fig_seg = go.Figure()
+            cores_seg = ["#c0392b" if d < -0.05 else "#27ae60" if d > 0.05 else "#7f8c8d"
+                         for d in df_seg["DIF"]]
+            fig_seg.add_trace(go.Bar(
+                x=df_seg["IRD"], y=df_seg["Segmento"], orientation="h",
+                marker_color=cores_seg,
+                text=[f"{v:.2f}".replace(".", ",") + f"  ({n} esc.)"
+                      for v, n in zip(df_seg["IRD"], df_seg["N"])],
+                textposition="outside", cliponaxis=False
+            ))
+            fig_seg.add_vline(x=float(media_rede_local), line_dash="dash", line_color="#1a3a5c",
+                              annotation_text="média do município",
+                              annotation_position="top")
+            fig_seg.update_layout(
+                height=90 + 42 * len(df_seg), showlegend=False,
+                margin=dict(l=20, r=90, t=30, b=20),
+                xaxis_title="Regularidade dos professores (0 a 5)",
+                xaxis_range=[0, 5.4], yaxis_title=None
+            )
+            st.plotly_chart(fig_seg, use_container_width=True)
+
+            # Leitura orientada à ação: pior segmento com nº mínimo de escolas
+            df_conf = df_seg[df_seg["N"] >= 3]
+            if not df_conf.empty:
+                pior = df_conf.loc[df_conf["IRD"].idxmin()]
+                if pior["DIF"] < -0.05:
+                    nome_pior = pior["Segmento"].split(" ", 1)[1].lower()
+                    st.markdown(
+                        f"**Comece por aqui:** as {nome_pior} têm a menor regularidade "
+                        f"do município ({formatar_br(pior['IRD'])}, em {int(pior['N'])} escolas), "
+                        f"{formatar_br(abs(pior['DIF']), 2)} ponto abaixo da média da rede. "
+                        f"É o segmento onde políticas de fixação de professores tendem a ter maior efeito."
+                    )
+                else:
+                    st.markdown(
+                        "**Boa notícia:** a regularidade é razoavelmente homogênea entre os "
+                        "segmentos da rede — não há um grupo de escolas puxando o resultado para baixo."
+                    )
+            st.caption(
+                "Uma escola que oferece mais de uma etapa aparece em todas as etapas que oferta — "
+                "os grupos por etapa se sobrepõem. Segmentos com menos de 3 escolas não geram "
+                "recomendação. Localização e etapa: Censo Escolar/INEP."
+            )
+
+    st.markdown("---")
     st.markdown("### Evolução da regularidade dos professores")
 
     ird_nac    = df.groupby("ANO")["IRD"].mean().reset_index().rename(columns={"IRD":"Média Brasil"})
