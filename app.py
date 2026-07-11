@@ -303,16 +303,5 @@ Nota Técnica nº 11/2015 e atualizações anuais.
 Dados públicos, uso gratuito e irrestrito.
 """)
 
-st.markdown("---")
-st.markdown(
-    """
-    <p style="text-align:center; font-size:0.78rem; color:#999; margin-top:1rem;">
-        © 2026 Joelma Barcellos Santanna · RegDoc — desenvolvido no Doutorado Profissional
-        em Administração, FUCAPE Business School · Uso livre para fins de gestão educacional.
-    </p>
-    """,
-    unsafe_allow_html=True
-)
-
 from utils.dados import rodape_institucional
 rodape_institucional()
