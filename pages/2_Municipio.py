@@ -445,8 +445,8 @@ with aba1:
                               annotation_text="média do município",
                               annotation_position="top")
             fig_seg.update_layout(
-                height=90 + 42 * len(df_seg), showlegend=False,
-                margin=dict(l=20, r=90, t=30, b=20),
+                height=90 + 42 * len(df_seg), showlegend=False, autosize=True,
+                margin=dict(l=10, r=60, t=30, b=20),
                 xaxis_title="Regularidade dos professores (0 a 5)",
                 xaxis_range=[0, 5.4], yaxis_title=None
             )
@@ -745,6 +745,16 @@ Não substitui o trabalho estrutural nas demais.</p></div>""" if not brf_qw.empt
              border-radius:0 6px 6px 0;font-size:13px;margin-bottom:1rem;}}
   .footer{{text-align:center;font-size:10.5px;color:#aaa;margin-top:1.5rem;border-top:1px solid #eee;padding-top:0.8rem;}}
   @media print{{ body{{padding:0.5rem;}} }}
+  @media (max-width:820px){{
+    body{{padding:0.9rem;}}
+    .nums{{grid-template-columns:repeat(2,1fr);}}
+    .header{{flex-direction:column;gap:0.4rem;}}
+    table{{font-size:11.5px;}}
+  }}
+  @media (max-width:480px){{
+    .nums{{grid-template-columns:1fr 1fr;gap:0.4rem;}}
+    .num .v{{font-size:1.2rem;}}
+  }}
 </style></head><body>
 <div class="header">
   <div>
