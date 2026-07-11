@@ -9,7 +9,8 @@ from datetime import datetime
 from utils.dados import (carregar_municipal, carregar_escola, formatar_br,
                          aplicar_estilo_global, classificar_tendencia,
                          render_tendencia, sombrear_pandemia, tabela_pares,
-                         municipal_por_rede, REDES_DISPONIVEIS)
+                         municipal_por_rede, REDES_DISPONIVEIS,
+                         calcular_anos_em_alerta, rotulo_cronicidade)
 
 st.set_page_config(page_title="Município · RegDoc", layout="wide")
 
@@ -608,6 +609,191 @@ with aba1:
         mime="text/html"
     )
     st.caption("Abra o arquivo no navegador e use Ctrl+P para imprimir ou salvar em PDF.")
+
+    # ── Briefing executivo (1 página, para a reunião com o prefeito) ──────────
+    st.markdown("---")
+    st.markdown("### 📋 Briefing executivo da rede")
+    st.caption(
+        "Resumo de uma página com o essencial: situação, prioridades e vitórias rápidas. "
+        "Feito para levar à reunião — abra no navegador e imprima em PDF."
+    )
+
+    def gerar_briefing_executivo():
+        # Escolas do recorte atual (município + ano + rede)
+        brf_esc = df_esc[(df_esc["CO_MUNICIPIO"] == co_mun) & (df_esc["ANO"] == ano_ref)].copy()
+        if rede_sel != "Todas as redes":
+            brf_esc = brf_esc[brf_esc["NO_DEPENDENCIA"].astype(str) == rede_sel]
+        brf_esc = brf_esc.dropna(subset=["IRD"])
+        brf_total = len(brf_esc)
+
+        def brf_classif(v):
+            if pd.notna(media_ird_nac) and v >= media_ird_nac: return "Favorável"
+            if pd.notna(ird) and v >= ird:                     return "Atenção"
+            return "Alerta"
+        brf_esc["RISCO"] = brf_esc["IRD"].apply(brf_classif)
+        brf_alerta = brf_esc[brf_esc["RISCO"] == "Alerta"].sort_values("IRD")
+        n_brf_alerta = len(brf_alerta)
+
+        # Vitórias rápidas
+        brf_qw = (brf_alerta[brf_alerta["IRD"] >= ird * 0.95].copy()
+                  if pd.notna(ird) else brf_alerta.iloc[0:0].copy())
+        if not brf_qw.empty:
+            brf_qw["FALTA"] = (ird - brf_qw["IRD"]).clip(lower=0)
+            brf_qw = brf_qw.sort_values("FALTA")
+
+        # Pares
+        brf_pares_txt = "—"
+        try:
+            brf_dfp, _ = tabela_pares(ano_ref, rede_sel)
+            brf_lin = brf_dfp[brf_dfp["CO_MUNICIPIO"] == co_mun]
+            if not brf_lin.empty:
+                brf_grp = brf_dfp[
+                    (brf_dfp["FAIXA_ICG"] == brf_lin["FAIXA_ICG"].iloc[0]) &
+                    (brf_dfp["FAIXA_PORTE"] == brf_lin["FAIXA_PORTE"].iloc[0])
+                ].dropna(subset=["IRD"]).sort_values("IRD", ascending=False).reset_index(drop=True)
+                if len(brf_grp) >= 10:
+                    brf_pos = int(brf_grp.index[brf_grp["CO_MUNICIPIO"] == co_mun][0]) + 1
+                    brf_pares_txt = f"{brf_pos}º de {len(brf_grp)} municípios parecidos"
+        except Exception:
+            pass
+
+        # Cronicidade (só na visão todas as redes, onde o critério é o oficial)
+        brf_cron_txt = ""
+        if rede_sel == "Todas as redes":
+            try:
+                brf_cron = calcular_anos_em_alerta(ano_ref)
+                brf_hit = brf_cron[brf_cron["CO_MUNICIPIO"] == co_mun]
+                if not brf_hit.empty:
+                    anos_al = int(brf_hit["ANOS_EM_ALERTA"].iloc[0])
+                    brf_cron_txt = (
+                        f"<div class='alerta-cron'>⏱️ Este município está em alerta há "
+                        f"<strong>{anos_al} ano(s) consecutivo(s)</strong>"
+                        + (" — situação crônica, que pede política estruturante, "
+                           "não apenas ações pontuais." if anos_al >= 4 else ".")
+                        + "</div>"
+                    )
+            except Exception:
+                pass
+
+        # Segmento mais frágil
+        brf_seg_txt = "Sem leitura por segmento (poucas escolas)."
+        if brf_total >= 3:
+            brf_media_loc = brf_esc["IRD"].mean()
+            brf_segs = []
+            for zona, nome_z in [("Urbana", "escolas urbanas"), ("Rural", "escolas rurais")]:
+                g = brf_esc[brf_esc["TP_LOCALIZACAO"] == zona]
+                if len(g) >= 3: brf_segs.append((nome_z, g["IRD"].mean(), len(g)))
+            for flag, nome_e in [("IN_INF", "escolas com educação infantil"),
+                                 ("IN_FUND", "escolas com ensino fundamental"),
+                                 ("IN_MED", "escolas com ensino médio")]:
+                g = brf_esc[brf_esc[flag] == 1]
+                if len(g) >= 3: brf_segs.append((nome_e, g["IRD"].mean(), len(g)))
+            if brf_segs:
+                brf_pior = min(brf_segs, key=lambda s: s[1])
+                if brf_pior[1] < brf_media_loc - 0.05:
+                    brf_seg_txt = (f"A menor regularidade está nas <strong>{brf_pior[0]}</strong> "
+                                   f"(IRD {formatar_br(brf_pior[1])}, {brf_pior[2]} escolas). "
+                                   f"Comece as ações de fixação de professores por elas.")
+                else:
+                    brf_seg_txt = "Regularidade homogênea entre os segmentos da rede — sem grupo crítico isolado."
+
+        # Tabelas
+        brf_prior = brf_alerta.head(5)
+        prior_rows = "".join(
+            f"<tr><td>{r['NO_ENTIDADE']}</td><td style='text-align:center'>{formatar_br(r['IRD'])}</td></tr>"
+            for _, r in brf_prior.iterrows()
+        ) or "<tr><td colspan='2'>Nenhuma escola em alerta 🎉</td></tr>"
+
+        qw_rows = "".join(
+            f"<tr><td>{r['NO_ENTIDADE']}</td><td style='text-align:center'>{formatar_br(r['IRD'])}</td>"
+            f"<td style='text-align:center'>{formatar_br(r['FALTA'])}</td></tr>"
+            for _, r in brf_qw.head(5).iterrows()
+        )
+        qw_section = (f"""
+<div class="section"><h2>🎯 Vitórias rápidas — {len(brf_qw)} escola(s) a menos de 5% de sair do alerta</h2>
+<table><thead><tr><th>Escola</th><th>IRD</th><th>Quanto falta</th></tr></thead>
+<tbody>{qw_rows}</tbody></table>
+<p class="nota">Prioridade tática: pouco esforço tira essas escolas da faixa vermelha.
+Não substitui o trabalho estrutural nas demais.</p></div>""" if not brf_qw.empty else "")
+
+        tend_txt = f"{tendencia['icone']} {tendencia['texto']}" if tendencia else "Série insuficiente para tendência."
+        rede_txt = "todas as redes" if rede_sel == "Todas as redes" else f"rede {rede_sel.lower()}"
+
+        return f"""<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<title>Briefing RegDoc — {municipio_label}</title>
+<style>
+  body{{font-family:Arial,sans-serif;padding:1.5rem 2rem;color:#222;max-width:860px;margin:0 auto;}}
+  .header{{background:#1a3a5c;color:white;padding:1.2rem 1.6rem;border-radius:10px;margin-bottom:1.2rem;
+           display:flex;justify-content:space-between;align-items:flex-start;}}
+  .header h1{{margin:0;font-size:1.15rem;color:white;}}
+  .header p{{margin:0.25rem 0 0;font-size:0.8rem;color:#b8cfe8;}}
+  .nums{{display:grid;grid-template-columns:repeat(4,1fr);gap:0.7rem;margin-bottom:1.2rem;}}
+  .num{{background:#f5f7fa;border:1px solid #e6ecf3;border-radius:8px;padding:0.7rem;text-align:center;}}
+  .num .v{{font-size:1.5rem;font-weight:bold;color:#1a3a5c;margin:0;}}
+  .num .v.red{{color:#c0392b;}} .num .v.green{{color:#27ae60;}}
+  .num .l{{font-size:0.7rem;color:#777;margin:0;}}
+  .section{{margin-bottom:1.1rem;}}
+  .section h2{{font-size:0.95rem;color:#1a3a5c;border-bottom:2px solid #1a3a5c;padding-bottom:0.25rem;margin-bottom:0.5rem;}}
+  table{{width:100%;border-collapse:collapse;font-size:12.5px;}}
+  th{{background:#1a3a5c;color:white;padding:6px 8px;text-align:left;}}
+  td{{padding:5px 8px;border-bottom:1px solid #eee;}}
+  .nota{{font-size:11px;color:#888;margin:0.4rem 0 0;}}
+  .alerta-cron{{background:#fdedec;border-left:4px solid #c0392b;padding:8px 12px;
+                border-radius:0 6px 6px 0;font-size:13px;margin-bottom:1rem;}}
+  .destaque{{background:#f0f7ff;border-left:4px solid #2e6da4;padding:8px 12px;
+             border-radius:0 6px 6px 0;font-size:13px;margin-bottom:1rem;}}
+  .footer{{text-align:center;font-size:10.5px;color:#aaa;margin-top:1.5rem;border-top:1px solid #eee;padding-top:0.8rem;}}
+  @media print{{ body{{padding:0.5rem;}} }}
+</style></head><body>
+<div class="header">
+  <div>
+    <p style="margin:0;font-size:10px;color:#b8cfe8;text-transform:uppercase;">Briefing executivo · RegDoc</p>
+    <h1>{municipio_label} · {uf_sel} · {ano_ref}</h1>
+    <p>Análise: {rede_txt} · {brf_total} escolas com dados</p>
+  </div>
+  <div style="font-size:0.75rem;color:#b8cfe8;text-align:right;">Gerado em {datetime.now().strftime('%d/%m/%Y')}</div>
+</div>
+
+<div class="nums">
+  <div class="num"><p class="v">{formatar_br(ird)}</p><p class="l">Regularidade da rede (0–5)</p></div>
+  <div class="num"><p class="v red">{n_brf_alerta}</p><p class="l">Escolas em alerta</p></div>
+  <div class="num"><p class="v green">{len(brf_qw)}</p><p class="l">Quase fora do alerta</p></div>
+  <div class="num"><p class="v" style="font-size:1.05rem;">{brf_pares_txt}</p><p class="l">Posição entre pares</p></div>
+</div>
+
+{brf_cron_txt}
+
+<div class="section"><h2>Situação e tendência</h2>
+  <p style="font-size:13px;margin:0 0 0.4rem;">Classificação: <strong>{situacao}</strong> ·
+  Média nacional: {formatar_br(media_ird_nac)} · Média {uf_sel}: {formatar_br(media_ird_uf)}</p>
+  <div class="destaque">{tend_txt}</div>
+</div>
+
+<div class="section"><h2>Onde a irregularidade se concentra</h2>
+  <p style="font-size:13px;margin:0;">{brf_seg_txt}</p>
+</div>
+
+{qw_section}
+
+<div class="section"><h2>🔴 As 5 escolas que mais precisam de atenção</h2>
+<table><thead><tr><th>Escola</th><th>IRD</th></tr></thead>
+<tbody>{prior_rows}</tbody></table>
+<p class="nota">Consulte a página Escola do RegDoc para orientações por perfil de cada unidade.</p></div>
+
+<div class="footer">
+RegDoc · Dados: Censo Escolar/Inep · Alerta = IRD abaixo da média municipal;
+"quase fora" = a menos de 5% do limiar · retendoc.streamlit.app
+</div>
+</body></html>"""
+
+    brf_html = gerar_briefing_executivo()
+    st.download_button(
+        label="📋 Baixar briefing executivo (1 página, HTML)",
+        data=brf_html.encode("utf-8"),
+        file_name=f"briefing_regdoc_{co_mun}_{ano_ref}.html",
+        mime="text/html"
+    )
 
 # ─────────────────────────────────────────────
 # ABA 2 — Ranking de Escolas
