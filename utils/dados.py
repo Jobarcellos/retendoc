@@ -276,6 +276,72 @@ def rotulo_cronicidade(anos):
     return f"{anos} anos seguidos ⚠️ crônico"
 
 
+# ── Grupo de pares (municípios comparáveis) ────────────────────────────────────
+@st.cache_data(show_spinner=False)
+def tabela_pares(ano_ref, rede="Todas as redes"):
+    """Classifica todos os municípios do ano em grupos de comparação:
+    quartil nacional de complexidade (ICG) × faixa de porte da rede
+    (nº de escolas da rede selecionada). Retorna (DataFrame, ano_usado_para_porte).
+
+    O porte vem da base de escolas (disponível a partir de 2019); para anos
+    anteriores usa-se o ano mais próximo disponível como proxy estrutural.
+    """
+    ano_ref = int(ano_ref)
+    df = municipal_por_rede(rede)
+    df_ano = df[df["ANO"] == ano_ref].dropna(subset=["IRD", "ICG"]).copy()
+    if df_ano.empty:
+        return df_ano, ano_ref
+
+    # Porte: nº de escolas municipais por município
+    esc = carregar_escola()
+    anos_esc = sorted(esc["ANO"].unique())
+    ano_porte = ano_ref if ano_ref in anos_esc else min(anos_esc, key=lambda a: abs(a - ano_ref))
+    esc_ano = esc[esc["ANO"] == ano_porte]
+    if rede != "Todas as redes":
+        esc_ano = esc_ano[esc_ano["NO_DEPENDENCIA"].astype(str) == rede]
+    porte = (esc_ano.groupby("CO_MUNICIPIO")["CO_ENTIDADE"]
+             .nunique().rename("N_ESCOLAS").reset_index())
+    df_ano = df_ano.merge(porte, on="CO_MUNICIPIO", how="left")
+    df_ano["N_ESCOLAS"] = df_ano["N_ESCOLAS"].fillna(0).astype(int)
+
+    # Faixas de complexidade (quartis nacionais; rank evita erro de limites repetidos)
+    rotulos_icg = ["complexidade baixa", "complexidade média-baixa",
+                   "complexidade média-alta", "complexidade alta"]
+    df_ano["FAIXA_ICG"] = pd.qcut(df_ano["ICG"].rank(method="first"), 4, labels=rotulos_icg)
+
+    # Faixas de porte
+    df_ano["FAIXA_PORTE"] = pd.cut(
+        df_ano["N_ESCOLAS"], bins=[-1, 5, 15, 40, 10**6],
+        labels=["até 5 escolas", "6 a 15 escolas", "16 a 40 escolas", "mais de 40 escolas"]
+    )
+    return df_ano, ano_porte
+
+
+# ── Visão municipal por rede (dependência administrativa) ─────────────────────
+REDES_DISPONIVEIS = ["Todas as redes", "Municipal", "Estadual", "Privada"]
+
+@st.cache_data(show_spinner=False)
+def municipal_por_rede(rede):
+    """Retorna o consolidado municipal (mesmas colunas de carregar_municipal),
+    calculado apenas com as escolas da rede escolhida.
+
+    Para "Todas as redes", devolve o consolidado original — garantindo que os
+    números padrão do app não mudam.
+    """
+    if rede == "Todas as redes":
+        return carregar_municipal()
+    esc = carregar_escola()
+    esc = esc[esc["NO_DEPENDENCIA"].astype(str) == rede]
+    agg = (esc.groupby(["CO_MUNICIPIO", "ANO"])
+              .agg(IRD=("IRD", "mean"), ICG=("ICG", "mean"),
+                   AFD=("AFD", "mean"), ATU=("ATU", "mean"),
+                   IED=("IED", "mean"),
+                   NO_MUNICIPIO=("NO_MUNICIPIO", "first"),
+                   SG_UF=("SG_UF", "first"))
+              .reset_index())
+    return agg
+
+
 def formatar_br(valor, casas=3):
     if pd.isna(valor):
         return "—"
