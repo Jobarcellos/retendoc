@@ -277,3 +277,6 @@ with st.expander("ℹ️ Como interpretar este painel"):
     Nota Técnica nº 11/2015 e atualizações anuais.
     Dados públicos, uso gratuito e irrestrito.
     """)
+
+from utils.dados import rodape_institucional
+rodape_institucional()
