@@ -249,18 +249,22 @@ def carregar_escola():
     df["SG_UF"] = df["SG_UF"].fillna("??")
     df["NO_ENTIDADE"] = df["NO_ENTIDADE"].fillna("Escola não identificada")
 
-    # Nome do município: o Censo grava em CAIXA ALTA sem acento até 2015 e em caixa
-    # mista com acento a partir de 2016 — o mesmo município aparecia duas vezes nas
-    # listas. Adota-se o nome da base municipal (acentuado) como versão canônica,
-    # exibido em caixa alta.
+    # Nome do município: o Censo grava em CAIXA ALTA e sem acento até 2015, e em caixa
+    # mista com acento a partir de 2016 — por isso o mesmo município aparecia duas vezes
+    # nas listas de seleção. Adota-se o nome da base municipal (grafia oficial do IBGE,
+    # acentuada, em caixa mista) como versão canônica única em todo o app.
     _canon = (carregar_municipal()[["CO_MUNICIPIO", "NO_MUNICIPIO"]]
               .drop_duplicates("CO_MUNICIPIO")
               .rename(columns={"NO_MUNICIPIO": "_NO_CANON"}))
     df = df.merge(_canon, on="CO_MUNICIPIO", how="left")
-    df["NO_MUNICIPIO"] = (df["_NO_CANON"]
-                          .fillna(df["NO_MUNICIPIO"])
-                          .fillna("Não identificado")
-                          .astype(str).str.upper())
+    # Fallback: municípios ausentes da base municipal (ex.: instalados recentemente)
+    # recebem o nome do Censo normalizado para caixa mista, com preposições em minúscula.
+    _fallback = (df["NO_MUNICIPIO"].astype(str).str.title()
+                 .str.replace(r"\b(Do|Da|Dos|Das|De|D)\b",
+                              lambda m: m.group(0).lower(), regex=True))
+    df["NO_MUNICIPIO"] = (df["_NO_CANON"].fillna(_fallback)
+                          .replace({"Nan": None, "None": None})
+                          .fillna("Não identificado"))
     df = df.drop(columns=["_NO_CANON"])
     return df
 
