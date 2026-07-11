@@ -5,7 +5,7 @@ import streamlit as st
 # Identidade e versionamento do artefato (exibidos na página Metodologia)
 VERSAO_APP = "1.2"
 FONTE_DADOS = "Indicadores Educacionais do Censo Escolar — Inep/MEC"
-COBERTURA = "5.570 municípios (2013–2025) e 209 mil+ escolas (2019–2025)"
+COBERTURA = "5.570 municípios e 209 mil+ escolas — série histórica de 2013 a 2025"
 
 
 def aplicar_estilo_global():
