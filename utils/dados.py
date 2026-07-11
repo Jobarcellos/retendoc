@@ -232,6 +232,50 @@ def classificar_risco(ird, media_nacional):
         return "Favorável", "#27ae60"
 
 
+# ── Cronicidade do alerta (compartilhada por Home, Ranking e Município) ────────
+@st.cache_data(show_spinner=False)
+def calcular_anos_em_alerta(ano_ref):
+    """Para cada município, conta há quantos ANOS CONSECUTIVOS (terminando em
+    ano_ref) o IRD está abaixo de 85% da média nacional daquele ano — o mesmo
+    critério de "Alerta" usado em todo o app.
+
+    Um ano sem dados interrompe a contagem (critério conservador).
+    Retorna um DataFrame com CO_MUNICIPIO e ANOS_EM_ALERTA (>= 1 apenas para
+    municípios em alerta no próprio ano de referência).
+    """
+    df = carregar_municipal().dropna(subset=["IRD"]).copy()
+    df = df[df["ANO"] <= int(ano_ref)]
+
+    # Média nacional de cada ano e flag de alerta ano a ano
+    df["MEDIA_ANO"] = df.groupby("ANO")["IRD"].transform("mean")
+    df["ALERTA"] = df["IRD"] < df["MEDIA_ANO"] * 0.85
+
+    # Ordena do ano de referência para trás e exige sequência sem buracos
+    df = df.sort_values(["CO_MUNICIPIO", "ANO"], ascending=[True, False])
+    df["POS"] = df.groupby("CO_MUNICIPIO").cumcount()
+    df["ANO_ESPERADO"] = int(ano_ref) - df["POS"]
+    df["SEGUE"] = df["ALERTA"] & (df["ANO"] == df["ANO_ESPERADO"])
+
+    # A sequência quebra no primeiro ano que não atende ao critério
+    df["QUEBROU"] = (~df["SEGUE"]).groupby(df["CO_MUNICIPIO"]).cummax()
+    streak = (df[~df["QUEBROU"]]
+              .groupby("CO_MUNICIPIO").size()
+              .rename("ANOS_EM_ALERTA").reset_index())
+    return streak
+
+
+def rotulo_cronicidade(anos):
+    """Traduz a contagem em linguagem de gestão."""
+    if pd.isna(anos) or anos <= 0:
+        return "—"
+    anos = int(anos)
+    if anos == 1:
+        return "1º ano em alerta"
+    if anos <= 3:
+        return f"{anos} anos seguidos"
+    return f"{anos} anos seguidos ⚠️ crônico"
+
+
 def formatar_br(valor, casas=3):
     if pd.isna(valor):
         return "—"
