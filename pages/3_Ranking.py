@@ -211,3 +211,6 @@ with st.expander("ℹ️ Como interpretar este ranking"):
     **Fonte:** Censo Escolar da Educação Básica — INEP/MEC.
     Nota Técnica nº 11/2015 e atualizações anuais.
     """)
+
+from utils.dados import rodape_institucional
+rodape_institucional()
