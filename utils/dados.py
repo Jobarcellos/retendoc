@@ -246,9 +246,22 @@ def carregar_escola():
     df["CO_MUNICIPIO"] = df["CO_MUNICIPIO"].astype(str).str.replace(r"\.0$", "", regex=True)
     df["CO_ENTIDADE"] = df["CO_ENTIDADE"].astype(str).str.replace(r"\.0$", "", regex=True)
     df["ANO"] = df["ANO"].astype(int)
-    df["NO_MUNICIPIO"] = df["NO_MUNICIPIO"].fillna("Não identificado")
     df["SG_UF"] = df["SG_UF"].fillna("??")
     df["NO_ENTIDADE"] = df["NO_ENTIDADE"].fillna("Escola não identificada")
+
+    # Nome do município: o Censo grava em CAIXA ALTA sem acento até 2015 e em caixa
+    # mista com acento a partir de 2016 — o mesmo município aparecia duas vezes nas
+    # listas. Adota-se o nome da base municipal (acentuado) como versão canônica,
+    # exibido em caixa alta.
+    _canon = (carregar_municipal()[["CO_MUNICIPIO", "NO_MUNICIPIO"]]
+              .drop_duplicates("CO_MUNICIPIO")
+              .rename(columns={"NO_MUNICIPIO": "_NO_CANON"}))
+    df = df.merge(_canon, on="CO_MUNICIPIO", how="left")
+    df["NO_MUNICIPIO"] = (df["_NO_CANON"]
+                          .fillna(df["NO_MUNICIPIO"])
+                          .fillna("Não identificado")
+                          .astype(str).str.upper())
+    df = df.drop(columns=["_NO_CANON"])
     return df
 
 
