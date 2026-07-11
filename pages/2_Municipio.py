@@ -789,6 +789,44 @@ with aba2:
                 f"✅ Todas as escolas com IRD acima da média nacional ({formatar_br(media_ird_nac, 3)})."
             )
 
+        # ── Vitórias rápidas: escolas a até 5% de sair do alerta ──────────────
+        if n_alerta > 0 and pd.notna(ird):
+            df_qw = df_esc_rank[
+                (df_esc_rank["RISCO"] == "Alerta") &
+                (df_esc_rank["IRD"] >= ird * 0.95)
+            ].copy()
+            if not df_qw.empty:
+                df_qw["FALTA"] = (ird - df_qw["IRD"]).clip(lower=0)
+                df_qw = df_qw.sort_values("FALTA")
+                st.markdown(
+                    f"""
+                    <div style="background:#eafaf1; border-left:5px solid #27ae60;
+                         padding:0.9rem 1.2rem; border-radius:0 8px 8px 0; margin:0.5rem 0;">
+                        <strong style="color:#1e8449;">🎯 Vitórias rápidas:
+                        {len(df_qw)} escola(s) muito perto de sair do alerta.</strong>
+                        <span style="color:#333;"> Estão a menos de 5% do limiar —
+                        com pouco esforço de retenção, saem da faixa vermelha e melhoram
+                        o resultado da rede já no próximo Censo.</span>
+                    </div>""",
+                    unsafe_allow_html=True
+                )
+                with st.expander(f"Ver as {len(df_qw)} escolas 'quase lá'"):
+                    tab_qw = df_qw[["NO_ENTIDADE", "IRD", "FALTA"]].copy()
+                    tab_qw["IRD"] = tab_qw["IRD"].apply(lambda v: formatar_br(v, 3))
+                    tab_qw["FALTA"] = tab_qw["FALTA"].apply(lambda v: formatar_br(v, 3))
+                    tab_qw = tab_qw.rename(columns={
+                        "NO_ENTIDADE": "Escola",
+                        "IRD": "Regularidade (IRD)",
+                        "FALTA": "Quanto falta para sair do alerta"
+                    })
+                    st.dataframe(tab_qw, use_container_width=True, hide_index=True)
+                    st.caption(
+                        f"Limiar de alerta desta rede: média municipal de {formatar_br(ird, 3)}. "
+                        "Priorizar escolas próximas do limiar gera resultado visível rápido — "
+                        "mas não substitui o trabalho estrutural nas escolas mais distantes dele. "
+                        "Consulte a página Escola para as orientações por perfil de cada unidade."
+                    )
+
         st.markdown("<br>", unsafe_allow_html=True)
         rm1, rm2 = st.columns(2)
         with rm1:
