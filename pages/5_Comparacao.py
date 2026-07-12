@@ -79,21 +79,35 @@ with aba_esc:
     co_mun_add = municipios[municipios["NO_MUNICIPIO"] == mun_add]["CO_MUNICIPIO"].iloc[0]
     with col3:
         busca_add = st.text_input("Buscar escola", placeholder="Digite parte do nome...", key="busca_add")
-        escolas_mun = df_esc[df_esc["CO_MUNICIPIO"] == co_mun_add][["CO_ENTIDADE","NO_ENTIDADE"]].drop_duplicates()
+        # Uma linha por escola (código INEP); nome canônico elimina duplicatas de
+        # escolas renomeadas. Homônimas recebem o código no rótulo e a seleção é
+        # feita pelo código, nunca pelo nome.
+        escolas_mun = (df_esc[df_esc["CO_MUNICIPIO"] == co_mun_add]
+                       [["CO_ENTIDADE", "NO_ENTIDADE"]]
+                       .drop_duplicates("CO_ENTIDADE"))
         if busca_add and len(busca_add) >= 3:
             escolas_mun = escolas_mun[escolas_mun["NO_ENTIDADE"].str.upper().str.contains(busca_add.upper(), na=False)]
         escolas_mun = escolas_mun.sort_values("NO_ENTIDADE")
         if not escolas_mun.empty:
-            escola_add = st.selectbox("Escola", escolas_mun["NO_ENTIDADE"].tolist(), key="escola_add")
+            _dup_add = escolas_mun["NO_ENTIDADE"].duplicated(keep=False)
+            escolas_mun["_ROTULO"] = escolas_mun["NO_ENTIDADE"]
+            escolas_mun.loc[_dup_add, "_ROTULO"] = (escolas_mun["NO_ENTIDADE"]
+                                                    + " (INEP " + escolas_mun["CO_ENTIDADE"] + ")")
+            _rot_add = dict(zip(escolas_mun["CO_ENTIDADE"], escolas_mun["_ROTULO"]))
+            co_esc_sel = st.selectbox("Escola", escolas_mun["CO_ENTIDADE"].tolist(),
+                                      format_func=lambda c: _rot_add.get(c, c), key="escola_add")
+            escola_add = escolas_mun.loc[escolas_mun["CO_ENTIDADE"] == co_esc_sel,
+                                         "NO_ENTIDADE"].iloc[0]
         else:
             st.warning("Nenhuma escola encontrada.")
+            co_esc_sel = None
             escola_add = None
     with col4:
         anos_disp = sorted(df_esc["ANO"].unique())
         ano_comp = st.selectbox("Ano", anos_disp, index=len(anos_disp)-1, key="ano_comp")
         st.markdown("<br>", unsafe_allow_html=True)
         if escola_add and st.button("➕ Adicionar", use_container_width=True):
-            co_esc_add = escolas_mun[escolas_mun["NO_ENTIDADE"] == escola_add]["CO_ENTIDADE"].iloc[0]
+            co_esc_add = co_esc_sel
             entrada = {"CO_ENTIDADE":co_esc_add,"NO_ENTIDADE":escola_add,
                        "NO_MUNICIPIO":mun_add,"SG_UF":uf_add,"ANO":ano_comp}
             if len(st.session_state.escolas_selecionadas) >= 20:
