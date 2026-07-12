@@ -366,16 +366,29 @@ with col2:
 co_mun = municipios[municipios["NO_MUNICIPIO"] == mun_sel]["CO_MUNICIPIO"].iloc[0]
 
 with col3:
-    df_escolas_mun = df_esc[df_esc["CO_MUNICIPIO"] == co_mun][["CO_ENTIDADE","NO_ENTIDADE"]].drop_duplicates()
+    # Uma linha por escola (código INEP): o nome já é canônico (o mais recente da
+    # série), então escolas renomeadas ou municipalizadas não aparecem duplicadas.
+    df_escolas_mun = (df_esc[df_esc["CO_MUNICIPIO"] == co_mun]
+                      [["CO_ENTIDADE", "NO_ENTIDADE"]]
+                      .drop_duplicates("CO_ENTIDADE"))
     if busca and len(busca) >= 3:
         df_escolas_mun = df_escolas_mun[df_escolas_mun["NO_ENTIDADE"].str.upper().str.contains(busca.upper(), na=False)]
     df_escolas_mun = df_escolas_mun.sort_values("NO_ENTIDADE")
     if df_escolas_mun.empty:
         st.warning("Nenhuma escola encontrada com esse nome neste município.")
         st.stop()
-    escola_sel = st.selectbox("Escola", df_escolas_mun["NO_ENTIDADE"].tolist())
+    # A seleção é feita pelo código INEP, não pelo nome: escolas homônimas (mesmo
+    # nome, códigos distintos) recebem o código no rótulo, e a página nunca abre
+    # a unidade errada.
+    _dup = df_escolas_mun["NO_ENTIDADE"].duplicated(keep=False)
+    df_escolas_mun["_ROTULO"] = df_escolas_mun["NO_ENTIDADE"]
+    df_escolas_mun.loc[_dup, "_ROTULO"] = (df_escolas_mun["NO_ENTIDADE"]
+                                           + " (INEP " + df_escolas_mun["CO_ENTIDADE"] + ")")
+    _rotulos = dict(zip(df_escolas_mun["CO_ENTIDADE"], df_escolas_mun["_ROTULO"]))
+    co_esc = st.selectbox("Escola", df_escolas_mun["CO_ENTIDADE"].tolist(),
+                          format_func=lambda c: _rotulos.get(c, c))
 
-co_esc = df_escolas_mun[df_escolas_mun["NO_ENTIDADE"] == escola_sel]["CO_ENTIDADE"].iloc[0]
+escola_sel = df_escolas_mun.loc[df_escolas_mun["CO_ENTIDADE"] == co_esc, "NO_ENTIDADE"].iloc[0]
 df_escola = df_esc[df_esc["CO_ENTIDADE"] == co_esc].sort_values("ANO").copy()
 
 if df_escola.empty:
