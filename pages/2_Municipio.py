@@ -11,7 +11,7 @@ from utils.dados import (carregar_municipal, carregar_escola, formatar_br,
                          render_tendencia, sombrear_pandemia, tabela_pares,
                          municipal_por_rede, REDES_DISPONIVEIS,
                          calcular_anos_em_alerta, rotulo_cronicidade, agora_br,
-                         leitura_ranking)
+                         leitura_ranking, rotulo_faixa_inep)
 
 st.set_page_config(page_title="Município · RegDoc", layout="wide")
 
@@ -1058,6 +1058,11 @@ with aba2:
         cols_extra = [c for c in ["ICG","ATU","AFD","IED"] if c in df_esc_rank.columns]
 
         df_tab_esc = df_esc_rank[cols_base + cols_extra].copy()
+        # Régua oficial do Inep, ao lado da régua relativa da rede (ver dados.py)
+        df_tab_esc.insert(
+            df_tab_esc.columns.get_loc("RISCO"), "FAIXA_INEP",
+            df_esc_rank["IRD"].apply(rotulo_faixa_inep)
+        )
         fmt_esc = {"IRD":3,"ICG":2,"ATU":1,"AFD":1,"IED":1}
         for col, dec in fmt_esc.items():
             if col in df_tab_esc.columns:
@@ -1067,6 +1072,7 @@ with aba2:
         df_tab_esc = df_tab_esc.rename(columns={
             "NO_ENTIDADE":    "Escola",
             "IRD":            "Regularidade",
+            "FAIXA_INEP":     "Faixa Inep",
             "RISCO":          "Situação",
             "NO_DEPENDENCIA": "Dependência",
             "ICG":            "Complexidade",
