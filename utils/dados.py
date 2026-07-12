@@ -1,6 +1,19 @@
 import pandas as pd
 import numpy as np
 import streamlit as st
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+FUSO_BR = ZoneInfo("America/Sao_Paulo")
+
+
+def agora_br():
+    """Data/hora atual no fuso de Brasília — usar em vez de datetime.now() em
+    qualquer 'Gerado em' de relatório. O servidor do Streamlit Cloud roda em
+    UTC; sem fuso explícito, o carimbo do relatório aparece três horas à
+    frente do horário real do Brasil."""
+    return datetime.now(FUSO_BR)
+
 
 # Identidade e versionamento do artefato (exibidos na página Metodologia)
 VERSAO_APP = "1.2"
