@@ -10,7 +10,7 @@ from utils.dados import (carregar_municipal, carregar_escola, formatar_br,
                          aplicar_estilo_global, classificar_tendencia,
                          render_tendencia, sombrear_pandemia, tabela_pares,
                          municipal_por_rede, REDES_DISPONIVEIS,
-                         calcular_anos_em_alerta, rotulo_cronicidade)
+                         calcular_anos_em_alerta, rotulo_cronicidade, agora_br)
 
 st.set_page_config(page_title="Município · RegDoc", layout="wide")
 
@@ -574,7 +574,7 @@ with aba1:
     <p style="margin:0;font-size:11px;color:#b8cfe8;text-transform:uppercase;">Relatório RegDoc — Município</p>
     <h1>{municipio_label} · {uf_sel}</h1><p>Ano de referência: {ano_ref}</p>
   </div>
-  <div style="font-size:0.8rem;color:#b8cfe8;text-align:right;">Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}</div>
+  <div style="font-size:0.8rem;color:#b8cfe8;text-align:right;">Gerado em {agora_br().strftime('%d/%m/%Y %H:%M')}</div>
 </div>
 <div class="grid2">
   <div class="ird-box">
@@ -598,7 +598,7 @@ with aba1:
 <div class="section"><h2>O que fazer — situação de {situacao}</h2>
   <div class="alert-box">{ori_html}</div>
 </div>
-<div class="footer">RegDoc · Dados: Censo Escolar/Inep · retendoc.streamlit.app · {datetime.now().strftime('%d/%m/%Y')}</div>
+<div class="footer">RegDoc · Dados: Censo Escolar/Inep · retendoc.streamlit.app · {agora_br().strftime('%d/%m/%Y')}</div>
 </body></html>"""
 
     html = gerar_relatorio_municipio()
@@ -762,7 +762,7 @@ Não substitui o trabalho estrutural nas demais.</p></div>""" if not brf_qw.empt
     <h1>{municipio_label} · {uf_sel} · {ano_ref}</h1>
     <p>Análise: {rede_txt} · {brf_total} escolas com dados</p>
   </div>
-  <div style="font-size:0.75rem;color:#b8cfe8;text-align:right;">Gerado em {datetime.now().strftime('%d/%m/%Y')}</div>
+  <div style="font-size:0.75rem;color:#b8cfe8;text-align:right;">Gerado em {agora_br().strftime('%d/%m/%Y')}</div>
 </div>
 
 <div class="nums">
@@ -1126,8 +1126,8 @@ with aba2:
 
             hdrs_html = "<th>Posição</th>" + "".join(f"<th>{c}</th>" for c in df_tab_esc.columns)
             filtros_txt  = " · ".join(filtros_ativos) if filtros_ativos else "Todas as escolas"
-            data_hora_rank = datetime.now().strftime("%d/%m/%Y %H:%M")
-            data_curta_rank = datetime.now().strftime("%d/%m/%Y")
+            data_hora_rank = agora_br().strftime("%d/%m/%Y %H:%M")
+            data_curta_rank = agora_br().strftime("%d/%m/%Y")
 
             html_rank = f"""<!DOCTYPE html>
 <html lang='pt-BR'><head><meta charset='utf-8'>
