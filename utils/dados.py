@@ -255,6 +255,13 @@ def carregar_municipal():
 
 @st.cache_resource(show_spinner=False)
 def carregar_escola():
+    # ATENÇÃO — cache_resource, e não cache_data, por causa do tamanho da base
+    # (~74 MB). cache_data serializaria uma CÓPIA por sessão e estoura o limite de
+    # memória do Streamlit Cloud; cache_resource devolve SEMPRE O MESMO OBJETO,
+    # compartilhado entre todos os usuários.
+    # Consequência: NUNCA escreva colunas no DataFrame devolvido por esta função.
+    # Sempre filtre e faça .copy() antes de criar coluna — caso contrário a mutação
+    # vaza para todas as sessões e só desaparece com reboot do app.
     df = pd.read_parquet("escola_consolidado.parquet")
     df["CO_MUNICIPIO"] = df["CO_MUNICIPIO"].astype(str).str.replace(r"\.0$", "", regex=True)
     df["CO_ENTIDADE"] = df["CO_ENTIDADE"].astype(str).str.replace(r"\.0$", "", regex=True)
@@ -539,3 +546,140 @@ def sombrear_pandemia(fig):
                        text="pandemia", showarrow=False,
                        font=dict(size=10, color="#7f8c8d"))
     return fig
+
+
+# ── Leitura em texto do ranking de escolas ────────────────────────────────────
+# Os cards e a tabela dizem QUANTO. Este bloco diz O QUE ISSO SIGNIFICA naquela
+# rede, em linguagem de gestão — sem jargão estatístico. É gerado a partir dos
+# próprios dados do município, e não de um texto fixo: as frases mudam conforme
+# o retrato da rede. Degrada com elegância quando há poucas escolas no filtro.
+
+def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
+    """Devolve um bloco HTML com a leitura gerencial do ranking de escolas.
+
+    Usado tanto na tela (st.markdown) quanto no relatório exportado, para que
+    o gestor leve para a reunião o mesmo texto que leu no app.
+    """
+    if df_rank is None or df_rank.empty:
+        return ""
+
+    d = df_rank.copy()
+    total = len(d)
+    n_alerta = int((d["RISCO"] == "Alerta").sum())
+    n_atencao = int((d["RISCO"] == "Atenção").sum())
+    n_favoravel = int((d["RISCO"] == "Favorável").sum())
+    pct_alerta = (n_alerta / total * 100) if total else 0
+
+    def _media(col):
+        return d[col].mean() if col in d.columns and d[col].notna().any() else float("nan")
+
+    icg_m, atu_m = _media("ICG"), _media("ATU")
+    afd_m, ied_m = _media("AFD"), _media("IED")
+
+    acima = pd.notna(ird_mun) and pd.notna(media_nac) and ird_mun >= media_nac
+    comp_nac = "acima" if acima else "abaixo"
+
+    # ── Parágrafo 1: o que é regularidade e onde a rede está ──────────────────
+    p1 = (
+        f"<b>Regularidade (IRD)</b> mede o quanto o corpo docente permaneceu na escola "
+        f"ao longo dos últimos cinco anos, numa escala de 0 a 5. Não é a rotatividade de "
+        f"um ano: é a marca acumulada da permanência. Quanto mais alto, mais estável a equipe. "
+        f"Em {municipio}, a média das escolas é <b>{formatar_br(ird_mun, 3)}</b>, "
+        f"<b>{comp_nac}</b> da média nacional de {formatar_br(media_nac, 3)} em {ano}."
+    )
+
+    # ── Parágrafo 2: as faixas são relativas, não notas ───────────────────────
+    p2 = (
+        f"<b>Situação</b> não é uma nota fixa — é uma posição relativa, e por isso muda "
+        f"conforme a rede. <b>Favorável</b>: a escola tem regularidade igual ou acima da média "
+        f"nacional ({formatar_br(media_nac, 3)}). <b>Atenção</b>: está acima da média do próprio "
+        f"município ({formatar_br(ird_mun, 3)}), mas ainda abaixo da nacional. <b>Alerta</b>: "
+        f"está abaixo da média da sua própria rede — ou seja, perde professores mais rápido "
+        f"que a média das escolas vizinhas, sob a mesma gestão e as mesmas regras."
+    )
+
+    if total >= 2:
+        p2 += (
+            f" Neste recorte, <b>{n_alerta} de {total} escolas</b> "
+            f"({formatar_br(pct_alerta, 1)}%) estão em alerta, {n_atencao} em atenção e "
+            f"{n_favoravel} em situação favorável."
+        )
+
+    # ── Parágrafo 3: o que cada coluna de contexto acrescenta ─────────────────
+    p3 = (
+        "<b>As demais colunas explicam o contexto</b> em que essa permanência acontece. "
+        "<b>Complexidade (ICG)</b> vai de 1 a 6 e resume o tamanho e a variedade da escola "
+        "(porte, turnos, etapas ofertadas): uma escola complexa com regularidade baixa é um "
+        "problema diferente de uma escola simples com regularidade baixa — a primeira pede "
+        "apoio estrutural, a segunda costuma responder a ajustes de gestão. "
+        "<b>Alunos por turma</b> indica a carga de sala. "
+        "<b>Formação (%)</b> é a proporção de professores com formação adequada à disciplina "
+        "que lecionam. <b>Esforço docente (%)</b> mede o desgaste: quantos turnos, turmas, "
+        "escolas e alunos cada professor acumula — quanto mais alto, mais espalhado está o "
+        "professor, e maior a chance de ele sair."
+    )
+
+    ctx = []
+    if pd.notna(icg_m):
+        ctx.append(f"complexidade média de {formatar_br(icg_m, 2)}")
+    if pd.notna(atu_m):
+        ctx.append(f"{formatar_br(atu_m, 1)} alunos por turma")
+    if pd.notna(afd_m):
+        ctx.append(f"{formatar_br(afd_m, 1)}% de formação adequada")
+    if pd.notna(ied_m):
+        ctx.append(f"{formatar_br(ied_m, 1)}% de esforço docente")
+    if ctx and total >= 2:
+        p3 += f" Na média deste recorte: {', '.join(ctx)}."
+
+    # ── Parágrafo 4: o contraste que aponta onde investigar ───────────────────
+    # Só faz sentido com escolas nos dois extremos; com 1 ou 2 escolas, calar.
+    p4 = ""
+    if n_alerta >= 3 and n_favoravel >= 3:
+        al = d[d["RISCO"] == "Alerta"]
+        fv = d[d["RISCO"] == "Favorável"]
+        pistas = []
+        for col, rotulo, casas, sufixo in [
+            ("IED", "esforço docente", 1, "%"),
+            ("ICG", "complexidade", 2, ""),
+            ("ATU", "alunos por turma", 1, ""),
+            ("AFD", "formação adequada", 1, "%"),
+        ]:
+            if col in d.columns and al[col].notna().any() and fv[col].notna().any():
+                m_al, m_fv = al[col].mean(), fv[col].mean()
+                if pd.notna(m_al) and pd.notna(m_fv) and abs(m_al - m_fv) > 0.01:
+                    direcao = "maior" if m_al > m_fv else "menor"
+                    pistas.append(
+                        f"{rotulo} <b>{direcao}</b> ({formatar_br(m_al, casas)}{sufixo} "
+                        f"contra {formatar_br(m_fv, casas)}{sufixo})"
+                    )
+        if pistas:
+            p4 = (
+                f"<b>Onde investigar primeiro.</b> Comparadas às escolas em situação favorável, "
+                f"as {n_alerta} escolas em alerta desta rede têm, em média, "
+                + "; ".join(pistas[:3]) + ". "
+                "São <b>pistas, não causas</b>: apontam a hipótese que vale testar com a "
+                "direção da escola, não o motivo comprovado da saída dos professores."
+            )
+
+    # ── Ressalva final: a fronteira do instrumento ────────────────────────────
+    p5 = (
+        "<b>O que esta tabela não responde.</b> Ela mostra <i>onde</i> a permanência é frágil "
+        "e <i>em que condições</i> — nunca <i>por quê</i>. A causa se confirma na escola: "
+        "escuta dos professores, análise do vínculo, da remuneração e do clima. "
+        "A leitura é sempre da escola ou da rede, nunca do desempenho de um professor "
+        "ou de um diretor."
+    )
+
+    paragrafos = "".join(
+        f"<p style='margin:0 0 0.7rem;'>{p}</p>" for p in [p1, p2, p3, p4, p5] if p
+    )
+
+    return f"""
+<div style="background:#f7f9fc; border:1px solid #dde4ed; border-left:5px solid #1a3a5c;
+     border-radius:0 10px 10px 0; padding:1.1rem 1.4rem; margin:1rem 0;
+     font-size:0.92rem; line-height:1.6; color:#2c3e50;">
+  <p style="margin:0 0 0.8rem; font-weight:700; color:#1a3a5c; font-size:1rem;">
+    📖 Como ler esta tabela — {municipio}, {ano}
+  </p>
+  {paragrafos}
+</div>"""
