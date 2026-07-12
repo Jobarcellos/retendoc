@@ -554,6 +554,38 @@ def sombrear_pandemia(fig):
 # próprios dados do município, e não de um texto fixo: as frases mudam conforme
 # o retrato da rede. Degrada com elegância quando há poucas escolas no filtro.
 
+# ── Faixa oficial do Inep (régua absoluta) ───────────────────────────────────
+# O Inep classifica as escolas em quatro faixas fixas de IRD, iguais para o país
+# inteiro. O RegDoc usa faixas RELATIVAS (contra a média da rede e a nacional),
+# porque a régua absoluta colapsa dentro de um município: em Cariacica, 2025, 73
+# das 122 escolas municipais caem numa única faixa ("média-baixa") — e o gestor
+# fica sem saber por qual começar. As duas réguas não competem; respondem a
+# perguntas diferentes ("como estou no país?" e "como estou na minha rede?"), e
+# por isso o app exibe ambas. Ver nota técnica do IRD (Inep).
+
+FAIXAS_INEP = [
+    (2.0, "Baixa regularidade", "#C0392B"),
+    (3.0, "Média-baixa",        "#E67E22"),
+    (4.0, "Média-alta",         "#F1C40F"),
+    (5.1, "Alta regularidade",  "#27AE60"),
+]
+
+
+def faixa_inep(ird):
+    """Faixa oficial do Inep para um IRD. Devolve (rótulo, cor)."""
+    if pd.isna(ird):
+        return ("—", "#95A5A6")
+    for limite, rotulo, cor in FAIXAS_INEP:
+        if ird <= limite:
+            return (rotulo, cor)
+    return ("—", "#95A5A6")
+
+
+def rotulo_faixa_inep(ird):
+    """Só o rótulo, para uso em tabelas."""
+    return faixa_inep(ird)[0]
+
+
 def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
     """Devolve um bloco HTML com a leitura gerencial do ranking de escolas.
 
@@ -604,6 +636,31 @@ def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
             f"({formatar_br(pct_alerta, 1)}%) estão em alerta, {n_atencao} em atenção e "
             f"{n_favoravel} em situação favorável."
         )
+
+    # ── Parágrafo 2b: as duas réguas, e por que elas não se contradizem ───────
+    n_inep = d["IRD"].apply(rotulo_faixa_inep).value_counts()
+    faixa_modal = n_inep.idxmax() if len(n_inep) else None
+    p2b = (
+        "<b>Por que há duas classificações.</b> A coluna <b>Faixa Inep</b> traz a régua oficial, "
+        "fixa e igual para o país inteiro (baixa até 2; média-baixa de 2 a 3; média-alta de 3 a 4; "
+        "alta acima de 4). Ela responde: <i>como esta escola está no Brasil?</i> A coluna "
+        "<b>Situação</b> compara a escola com as demais da sua própria rede e responde outra "
+        "pergunta: <i>por qual delas eu começo?</i> As duas estão corretas — e é justamente onde "
+        "elas discordam que mora a informação útil."
+    )
+    if faixa_modal is not None and total >= 10:
+        n_modal = int(n_inep.max())
+        pct_modal = n_modal / total * 100
+        if pct_modal >= 40:
+            sub = d[d["IRD"].apply(rotulo_faixa_inep) == faixa_modal]
+            quebra = sub["RISCO"].value_counts()
+            detalhe = ", ".join(f"{int(v)} em {k.lower()}" for k, v in quebra.items())
+            p2b += (
+                f" Neste recorte, a régua oficial coloca <b>{n_modal} das {total} escolas</b> "
+                f"({formatar_br(pct_modal, 0)}%) numa única faixa (\"{faixa_modal.lower()}\"), "
+                f"como se fossem iguais. Olhando para dentro dessa mesma faixa, o RegDoc as separa "
+                f"em {detalhe} — e é essa separação que diz onde a gestão age primeiro."
+            )
 
     # ── Parágrafo 3: o que cada coluna de contexto acrescenta ─────────────────
     p3 = (
@@ -671,7 +728,7 @@ def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
     )
 
     paragrafos = "".join(
-        f"<p style='margin:0 0 0.7rem;'>{p}</p>" for p in [p1, p2, p3, p4, p5] if p
+        f"<p style='margin:0 0 0.7rem;'>{p}</p>" for p in [p1, p2, p2b, p3, p4, p5] if p
     )
 
     return f"""
