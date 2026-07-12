@@ -104,12 +104,7 @@ st.title("🔍 Análise por Município")
 st.caption("Evolução da regularidade dos professores e comparação com médias nacionais e estaduais")
 
 df = carregar_municipal()
-
-@st.cache_data(show_spinner=False)
-def load_escolas():
-    return carregar_escola()
-
-df_esc = load_escolas()
+df_esc = carregar_escola()
 
 # ── Filtros compartilhados ─────────────────────────────────────────────────────
 col1, col2, col3f = st.columns([1, 2, 1])
