@@ -8,7 +8,8 @@ import plotly.graph_objects as go
 from datetime import datetime
 from utils.dados import (carregar_escola, carregar_municipal, formatar_br,
                          aplicar_estilo_global, classificar_tendencia,
-                         render_tendencia, sombrear_pandemia, agora_br)
+                         render_tendencia, sombrear_pandemia, agora_br,
+                         faixa_inep)
 
 st.set_page_config(page_title="Escola · RegDoc", layout="wide")
 
@@ -452,6 +453,11 @@ st.markdown("---")
 st.markdown(f"### {escola_sel}")
 st.caption(f"Código INEP: {co_esc} · {mun_sel} · {uf_sel} · {ano_ref}")
 
+# Régua oficial do Inep, exibida ao lado da régua relativa da rede.
+# As duas respondem a perguntas diferentes: "como estou no país?" e
+# "como estou na minha rede?" — ver comentário em utils/dados.py.
+faixa_lbl, faixa_cor = faixa_inep(ird)
+
 col_ird, col_comp = st.columns([1, 2])
 with col_ird:
     st.markdown(f"""
@@ -465,6 +471,11 @@ with col_ird:
         </p>
         <p style="color:{cor_hex}; margin:0; font-size:3.5rem; font-weight:bold;">{formatar_br(ird)}</p>
         <p style="color:{cor_hex}; margin:0; font-size:1.2rem; font-weight:bold;">● {situacao}</p>
+        <p style="margin:0.6rem 0 0; font-size:0.78rem; color:#7f8c8d;
+           border-top:1px solid {cor_hex}33; padding-top:0.5rem;">
+            Faixa oficial do Inep:
+            <span style="color:{faixa_cor}; font-weight:600;">{faixa_lbl}</span>
+        </p>
     </div>""", unsafe_allow_html=True)
 
 with col_comp:
@@ -763,6 +774,9 @@ def gerar_relatorio_escola():
   <div class="ird-box">
     <p class="ird-label">Regularidade dos professores (0 a 5)</p>
     <p class="ird-num">{formatar_br(ird)}</p><p class="ird-sit">● {situacao}</p>
+    <p style="margin:0.5rem 0 0; font-size:0.78rem; color:#5a6c7d;">
+      Faixa oficial do Inep: <b>{faixa_lbl}</b>
+    </p>
   </div>
   <div class="metrics">
     <div class="metric"><p class="val">{formatar_br(media_ird_nac)}</p><p class="lbl">Média nacional</p></div>
