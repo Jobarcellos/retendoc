@@ -823,21 +823,33 @@ with aba2:
     # ── Busca por nome — selectbox com busca integrada ───────────────────
     filtros_ativos = []
 
-    nomes_escolas = sorted(
-        df_esc[df_esc["CO_MUNICIPIO"] == co_mun]["NO_ENTIDADE"]
-        .dropna().unique().tolist()
-    )
-    opcoes_nome = ["Todas as escolas"] + nomes_escolas
+    # Uma opção por escola (código INEP), com nome canônico — a lista não traz
+    # mais nomes antigos de escolas renomeadas/municipalizadas, e o filtro passa
+    # a ser pelo código, de modo que a escola é encontrada em qualquer ano de
+    # referência. Homônimas recebem o código INEP no rótulo.
+    esc_opcoes = (df_esc[df_esc["CO_MUNICIPIO"] == co_mun]
+                  [["CO_ENTIDADE", "NO_ENTIDADE"]]
+                  .dropna(subset=["NO_ENTIDADE"])
+                  .drop_duplicates("CO_ENTIDADE")
+                  .sort_values("NO_ENTIDADE"))
+    _dup_b = esc_opcoes["NO_ENTIDADE"].duplicated(keep=False)
+    esc_opcoes["_ROTULO"] = esc_opcoes["NO_ENTIDADE"]
+    esc_opcoes.loc[_dup_b, "_ROTULO"] = (esc_opcoes["NO_ENTIDADE"]
+                                         + " (INEP " + esc_opcoes["CO_ENTIDADE"] + ")")
+    _rotulos_b = dict(zip(esc_opcoes["CO_ENTIDADE"], esc_opcoes["_ROTULO"]))
+    opcoes_nome = ["Todas as escolas"] + esc_opcoes["CO_ENTIDADE"].tolist()
 
     escola_nome_sel = st.selectbox(
         "🔎 Buscar escola pelo nome (digite para filtrar a lista)",
         options=opcoes_nome,
         index=0,
+        format_func=lambda c: ("Todas as escolas" if c == "Todas as escolas"
+                               else _rotulos_b.get(c, c)),
         key="busca_escola"
     )
     busca_nome = "" if escola_nome_sel == "Todas as escolas" else escola_nome_sel
     if busca_nome:
-        filtros_ativos.append(f"Escola: {escola_nome_sel}")
+        filtros_ativos.append(f"Escola: {_rotulos_b.get(busca_nome, busca_nome)}")
 
     # ── Filtros adicionais (dependência e etapa) ───────────────────────────
     if tem_dep or tem_etapa:
@@ -893,9 +905,9 @@ with aba2:
 
     total_mun = len(df_esc_mun)  # total antes de filtrar (para cobertura)
 
-    # Filtro por nome (match exato via selectbox)
+    # Filtro por escola (pelo código INEP — imune a renomeações entre anos)
     if busca_nome:
-        df_esc_mun = df_esc_mun[df_esc_mun["NO_ENTIDADE"] == busca_nome]
+        df_esc_mun = df_esc_mun[df_esc_mun["CO_ENTIDADE"] == busca_nome]
 
     # Filtro de dependência
     if tem_dep and dep_sel is not None:
