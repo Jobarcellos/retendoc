@@ -266,6 +266,21 @@ def carregar_escola():
                           .replace({"Nan": None, "None": None})
                           .fillna("Não identificado"))
     df = df.drop(columns=["_NO_CANON"])
+
+    # Nome canônico da escola: o Censo altera o nome quando a escola muda de rede
+    # (ex.: EEEFM → EMEF após municipalização) ou é renomeada — por isso a mesma
+    # escola aparecia duas vezes nas listas de seleção e a busca pelo nome antigo
+    # devolvia vazio no ano de referência. Adota-se o nome mais recente da série
+    # como versão única em todo o app; o nome original de cada ano fica preservado
+    # em NO_ENTIDADE_CENSO para rastreabilidade.
+    df["NO_ENTIDADE_CENSO"] = df["NO_ENTIDADE"]
+    _nome_atual = (df.sort_values("ANO")
+                     .drop_duplicates("CO_ENTIDADE", keep="last")
+                     [["CO_ENTIDADE", "NO_ENTIDADE"]]
+                     .rename(columns={"NO_ENTIDADE": "_NOME_ATUAL"}))
+    df = df.merge(_nome_atual, on="CO_ENTIDADE", how="left")
+    df["NO_ENTIDADE"] = df["_NOME_ATUAL"].fillna(df["NO_ENTIDADE"])
+    df = df.drop(columns=["_NOME_ATUAL"])
     return df
 
 
