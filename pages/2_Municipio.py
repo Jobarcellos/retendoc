@@ -10,7 +10,8 @@ from utils.dados import (carregar_municipal, carregar_escola, formatar_br,
                          aplicar_estilo_global, classificar_tendencia,
                          render_tendencia, sombrear_pandemia, tabela_pares,
                          municipal_por_rede, REDES_DISPONIVEIS,
-                         calcular_anos_em_alerta, rotulo_cronicidade, agora_br)
+                         calcular_anos_em_alerta, rotulo_cronicidade, agora_br,
+                         leitura_ranking)
 
 st.set_page_config(page_title="Município · RegDoc", layout="wide")
 
@@ -1087,6 +1088,13 @@ with aba2:
         )
         st.dataframe(df_styled, use_container_width=True)
 
+        # ── Leitura em texto: o que a tabela significa nesta rede ───────────
+        html_leitura = leitura_ranking(
+            df_esc_rank, ird, media_ird_nac, municipio_label, ano_ref
+        )
+        if html_leitura:
+            st.markdown(html_leitura, unsafe_allow_html=True)
+
         # ── Downloads ──────────────────────────────────────────────────────
         dl1, dl2, _ = st.columns([1, 1, 2])
 
@@ -1160,6 +1168,7 @@ with aba2:
   <div class='card'><div class='card-num' style='color:#27ae60'>{n_favoravel}</div><div>🟢 Favorável</div></div>
 </div>
 <div class='filtros'>🔍 Filtros aplicados: {filtros_txt}</div>
+{html_leitura}
 <table><thead><tr>{hdrs_html}</tr></thead><tbody>{rows_html}</tbody></table>
 <div class='footer'>
   RegDoc · Dados: Censo Escolar/INEP · retendoc.streamlit.app · {data_curta_rank}<br>
