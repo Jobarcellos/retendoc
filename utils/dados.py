@@ -253,7 +253,7 @@ def carregar_municipal():
     return df
 
 
-@st.cache_data
+@st.cache_resource(show_spinner=False)
 def carregar_escola():
     df = pd.read_parquet("escola_consolidado.parquet")
     df["CO_MUNICIPIO"] = df["CO_MUNICIPIO"].astype(str).str.replace(r"\.0$", "", regex=True)
