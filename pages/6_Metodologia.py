@@ -52,6 +52,32 @@ Para acompanhar a evolução da sua rede ao longo do tempo, use o **valor do IRD
 **tendência histórica**, não a cor do semáforo.
 """)
 
+st.markdown("### 2b. As duas réguas: faixa oficial do Inep × situação na sua rede")
+st.markdown("""
+O RegDoc exibe **duas classificações para o mesmo IRD**, e elas não se contradizem —
+respondem a perguntas diferentes.
+
+| | Faixa Inep | Situação (RegDoc) |
+|---|---|---|
+| **Régua** | Absoluta e fixa: baixa (até 2), média-baixa (2 a 3), média-alta (3 a 4), alta (acima de 4) | Relativa: compara com a média nacional e a da própria rede |
+| **Responde** | Como esta escola está **no Brasil**? | Por qual escola **eu começo**? |
+| **Origem** | Classificação oficial publicada pelo Inep | Critério gerencial do RegDoc |
+
+**Por que não basta a régua oficial.** Ela funciona para a estatística nacional, mas
+se desmancha dentro de uma rede. Em Cariacica, em 2025, **73 das 122 escolas municipais
+caem numa única faixa** ("média-baixa"). A régua oficial diz que são iguais; o gestor
+precisa saber qual visitar primeiro. Olhando dentro dessa mesma faixa, a régua relativa
+separa 48 escolas em atenção e 25 em alerta.
+
+**Por que não basta a régua relativa.** Porque o secretário conhece a classificação do
+Inep, e uma plataforma que a contradiz sem explicação perde credibilidade. Mostrando as
+duas, fica claro que não há contradição: há duas perguntas.
+
+**Onde elas discordam está a informação útil.** Uma escola pode estar em faixa aceitável
+no país e ainda assim ser a que mais perde professores na sua rede — e é ela que precisa
+de ação agora.
+""")
+
 st.markdown("### 3. Tendência histórica: cinco categorias + alerta de ruptura")
 st.markdown("""
 Nos módulos **Município** e **Escola**, o sistema ajusta uma linha de tendência
