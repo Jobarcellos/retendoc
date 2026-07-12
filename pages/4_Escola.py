@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 from utils.dados import (carregar_escola, carregar_municipal, formatar_br,
                          aplicar_estilo_global, classificar_tendencia,
-                         render_tendencia, sombrear_pandemia)
+                         render_tendencia, sombrear_pandemia, agora_br)
 
 st.set_page_config(page_title="Escola · RegDoc", layout="wide")
 
@@ -757,7 +757,7 @@ def gerar_relatorio_escola():
     <h1>{escola_sel}</h1>
     <p>Código INEP: {co_esc} · {mun_sel} · {uf_sel} · {ano_ref}</p>
   </div>
-  <div style="font-size:0.8rem;color:#b8cfe8;text-align:right;">Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')}</div>
+  <div style="font-size:0.8rem;color:#b8cfe8;text-align:right;">Gerado em {agora_br().strftime('%d/%m/%Y %H:%M')}</div>
 </div>
 <div class="grid2">
   <div class="ird-box">
@@ -782,7 +782,7 @@ def gerar_relatorio_escola():
   <div class="alert-box">{ori_html}</div>
 </div>
 <div class="section"><h2>Checklist de ação</h2>{checklist}</div>
-<div class="footer">RegDoc · Dados: Censo Escolar/Inep · retendoc.streamlit.app · {datetime.now().strftime('%d/%m/%Y')}</div>
+<div class="footer">RegDoc · Dados: Censo Escolar/Inep · retendoc.streamlit.app · {agora_br().strftime('%d/%m/%Y')}</div>
 </body></html>"""
 
 html = gerar_relatorio_escola()
