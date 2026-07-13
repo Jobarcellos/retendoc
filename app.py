@@ -117,10 +117,15 @@ with col1:
         <p style="font-size:0.85rem; color:#777; margin:0;">municípios monitorados</p>
     </div>""", unsafe_allow_html=True)
 with col2:
+    # 209.960 = nº de escolas DISTINTAS em escola_consolidado.parquet na série
+    # completa (2013–2025). Média de ~165 mil por ano; a diferença vem de
+    # aberturas, fechamentos e recodificações de unidades ao longo do período.
+    # Valor fixo por opção deliberada: calcular exigiria carregar o parquet de
+    # escolas (~74 MB) já na abertura do app, penalizando o primeiro acesso.
     st.markdown("""
     <div class="num-card" style="border-right:1px solid #eee;">
-        <p style="font-size:0.85rem; color:#777; margin:0;">escolas na série histórica</p>
-        <p style="font-size:0.85rem; color:#777; margin:0;">escolas acompanhadas</p>
+        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c;">209.960</p>
+        <p style="font-size:0.85rem; color:#777; margin:0;">escolas na série histórica (2013–2025)</p>
     </div>""", unsafe_allow_html=True)
 with col3:
     st.markdown("""
