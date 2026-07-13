@@ -45,31 +45,31 @@ IRD no ano de referência**:
 **Por que relativa?** Para priorizar, a cada ciclo, quem está mais atrás do país —
 independentemente de quanto a média geral suba ou desça.
 
-**Consequência que você deve conhecer:** como a régua acompanha a média do ano,
+**Consequência que você deve conhecer:** como o critério acompanha a média do ano,
 as **contagens de alerta de anos diferentes não são diretamente comparáveis**.
 Um município pode entrar em alerta sem que seu IRD caia, se a média nacional subir.
 Para acompanhar a evolução da sua rede ao longo do tempo, use o **valor do IRD** e a
 **tendência histórica**, não a cor do semáforo.
 """)
 
-st.markdown("### 2b. As duas réguas: faixa oficial do Inep × situação na sua rede")
+st.markdown("### 2b. As duas classificações: faixa oficial do Inep × situação na sua rede")
 st.markdown("""
 O RegDoc exibe **duas classificações para o mesmo IRD**, e elas não se contradizem —
 respondem a perguntas diferentes.
 
 | | Faixa Inep | Situação (RegDoc) |
 |---|---|---|
-| **Régua** | Absoluta e fixa: baixa (até 2), média-baixa (2 a 3), média-alta (3 a 4), alta (acima de 4) | Relativa: compara com a média nacional e a da própria rede |
+| **Critério** | Absoluto e fixo: baixa (até 2), média-baixa (2 a 3), média-alta (3 a 4), alta (acima de 4) | Relativo: compara com a média nacional e a da própria rede |
 | **Responde** | Como esta escola está **no Brasil**? | Por qual escola **eu começo**? |
 | **Origem** | Classificação oficial publicada pelo Inep | Critério gerencial do RegDoc |
 
-**Por que não basta a régua oficial.** Ela funciona para a estatística nacional, mas
-se desmancha dentro de uma rede. Em Cariacica, em 2025, **73 das 122 escolas municipais
-caem numa única faixa** ("média-baixa"). A régua oficial diz que são iguais; o gestor
-precisa saber qual visitar primeiro. Olhando dentro dessa mesma faixa, a régua relativa
+**Por que não basta o critério oficial.** Ele funciona para a estatística nacional, mas
+perde força dentro de uma rede. Em Cariacica, em 2025, **73 das 122 escolas municipais
+caem numa única faixa** ("média-baixa"). O critério oficial diz que são iguais; o gestor
+precisa saber qual visitar primeiro. Olhando dentro dessa mesma faixa, o critério relativo
 separa 48 escolas em atenção e 25 em alerta.
 
-**Por que não basta a régua relativa.** Porque o secretário conhece a classificação do
+**Por que não basta o critério relativo.** Porque o secretário conhece a classificação do
 Inep, e uma plataforma que a contradiz sem explicação perde credibilidade. Mostrando as
 duas, fica claro que não há contradição: há duas perguntas.
 
