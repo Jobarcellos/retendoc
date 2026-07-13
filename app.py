@@ -2,7 +2,8 @@ import streamlit as st
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.dados import (carregar_municipal, calcular_anos_em_alerta,
-                         rotulo_cronicidade, icone_pagina, marca_sidebar)
+                         rotulo_cronicidade, icone_pagina, marca_sidebar,
+                         _logo_data_uri)
 
 st.set_page_config(
     page_title="RegDoc — Regularidade Docente",
@@ -82,12 +83,31 @@ st.markdown("""
     .bloco-topo {
         background: linear-gradient(135deg, #1a3a5c 0%, #2e6da4 100%);
         color: white;
-        padding: 2.5rem 3rem;
+        padding: 2.2rem 3rem;
         border-radius: 12px;
         margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1.6rem;
     }
-    .bloco-topo h1 { color: white; margin: 0; font-size: 2.2rem; }
-    .bloco-topo p  { color: #b8cfe8; margin: 0.5rem 0 0 0; font-size: 1.05rem; }
+    .bloco-topo h1 { color: white; margin: 0; font-size: 2.1rem; line-height: 1.15; }
+    .bloco-topo p  { color: #b8cfe8; margin: 0.4rem 0 0 0; font-size: 1.05rem; }
+    /* A marca traz o nome "RegDoc" desenhado; por isso o <h1> ao lado carrega
+       apenas a descrição — repetir a palavra seria redundante. O fundo do PNG
+       é #1a3a5c, mesma cor em que o gradiente começa: a emenda some. */
+    .marca-topo {
+        width: 78px;
+        height: 78px;
+        border-radius: 14px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    }
+    @media (max-width: 768px) {
+        .bloco-topo { padding: 1.4rem 1.2rem; gap: 1rem; }
+        .bloco-topo h1 { font-size: 1.45rem; }
+        .bloco-topo p  { font-size: 0.9rem; }
+        .marca-topo { width: 56px; height: 56px; border-radius: 10px; }
+    }
     .card-nav {
         border: 1px solid #dde4ed;
         border-radius: 10px;
@@ -107,10 +127,19 @@ st.markdown("""
 marca_sidebar()
 
 # ── Cabeçalho ─────────────────────────────────────────────────────────────────
-st.markdown("""
+# Com a marca presente, o <h1> traz só a descrição. Se o PNG não for encontrado,
+# o título volta a exibir "RegDoc — Regularidade Docente": o nome nunca se perde.
+_logo = _logo_data_uri()
+_marca = f'<img src="{_logo}" class="marca-topo" alt="RegDoc">' if _logo else ""
+_titulo = "Regularidade Docente" if _logo else "RegDoc — Regularidade Docente"
+
+st.markdown(f"""
 <div class="bloco-topo">
-    <h1>RegDoc — Regularidade Docente</h1>
-    <p>Monitoramento da permanência dos professores nas redes municipais brasileiras · 2013–2025</p>
+    {_marca}
+    <div>
+        <h1>{_titulo}</h1>
+        <p>Monitoramento da permanência dos professores nas redes municipais brasileiras · 2013–2025</p>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
