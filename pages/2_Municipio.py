@@ -11,9 +11,9 @@ from utils.dados import (carregar_municipal, carregar_escola, formatar_br,
                          render_tendencia, sombrear_pandemia, tabela_pares,
                          municipal_por_rede, REDES_DISPONIVEIS,
                          calcular_anos_em_alerta, rotulo_cronicidade, agora_br,
-                         leitura_ranking, rotulo_faixa_inep)
+                         leitura_ranking, rotulo_faixa_inep, icone_pagina)
 
-st.set_page_config(page_title="Município · RegDoc", layout="wide")
+st.set_page_config(page_title="Município · RegDoc", page_icon=icone_pagina(), layout="wide")
 
 aplicar_estilo_global()
 
