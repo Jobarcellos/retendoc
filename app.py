@@ -119,7 +119,7 @@ with col1:
 with col2:
     st.markdown("""
     <div class="num-card" style="border-right:1px solid #eee;">
-        <p style="font-size:2rem; font-weight:bold; color:#1a3a5c;">209 mil</p>
+        <p style="font-size:0.85rem; color:#777; margin:0;">escolas na série histórica</p>
         <p style="font-size:0.85rem; color:#777; margin:0;">escolas acompanhadas</p>
     </div>""", unsafe_allow_html=True)
 with col3:
