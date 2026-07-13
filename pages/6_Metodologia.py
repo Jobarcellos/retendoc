@@ -2,9 +2,9 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import streamlit as st
-from utils.dados import aplicar_estilo_global, VERSAO_APP, FONTE_DADOS, COBERTURA
+from utils.dados import aplicar_estilo_global, VERSAO_APP, FONTE_DADOS, COBERTURA, icone_pagina
 
-st.set_page_config(page_title="Metodologia · RegDoc", layout="wide")
+st.set_page_config(page_title="Metodologia · RegDoc", page_icon=icone_pagina(), layout="wide")
 aplicar_estilo_global()
 
 st.title("📋 Metodologia e Notas Técnicas")
