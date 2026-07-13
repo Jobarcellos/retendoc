@@ -5,9 +5,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global, classificar_risco, calcular_anos_em_alerta, rotulo_cronicidade
+from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global, classificar_risco, calcular_anos_em_alerta, rotulo_cronicidade, icone_pagina
 
-st.set_page_config(page_title="Ranking · RegDoc", layout="wide")
+st.set_page_config(page_title="Ranking · RegDoc", page_icon=icone_pagina(), layout="wide")
 
 aplicar_estilo_global()
 
