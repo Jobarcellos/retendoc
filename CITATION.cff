@@ -1,15 +1,14 @@
 cff-version: 1.2.0
-message: "Se voce utilizar o RegDoc, cite conforme abaixo."
-title: "RegDoc: monitor de regularidade docente em redes publicas de ensino"
+message: "Se você utilizar o RegDoc, cite conforme abaixo."
+title: "RegDoc: monitor de regularidade docente em redes públicas de ensino"
 abstract: >-
-  Aplicacao web gratuita que transforma os dados publicos do Censo Escolar
-  (Inep/MEC) em diagnostico gerencial sobre a permanencia de professores nas
-  redes publicas brasileiras. Serie historica 2013-2025, cobrindo 5.570
-  municipios e mais de 209 mil escolas ao longo da serie (cerca de 165 mil por
-  ano). Sem custo, cadastro ou instalacao.
-  Tem como indicador central o IRD (Indicador de Regularidade do Docente),
-  complementado por ATU, AFD, IED e ICG. Destina-se a secretarios municipais
-  de educacao e a diretores escolares.
+  Aplicação web gratuita que transforma os dados públicos do Censo Escolar
+  (Inep/MEC) em diagnóstico gerencial sobre a permanência de professores nas
+  redes públicas brasileiras. Série histórica 2013–2025, cobrindo 5.570
+  municípios e mais de 209 mil escolas ao longo da série (cerca de 165 mil por
+  ano). Sem custo, cadastro ou instalação. Tem como indicador central o IRD
+  (Indicador de Regularidade do Docente), complementado por ATU, AFD, IED e ICG.
+  Destina-se a secretários municipais de educação e a diretores escolares.
 type: software
 authors:
   - family-names: "Barcellos Santanna"
@@ -18,14 +17,15 @@ authors:
     affiliation: "FUCAPE Business School"
 repository-code: "https://github.com/Jobarcellos/retendoc"
 url: "https://retendoc.streamlit.app"
+doi: "10.5281/zenodo.21343128"
 keywords:
   - "regularidade docente"
   - "IRD"
   - "Censo Escolar"
   - "Inep"
-  - "gestao educacional"
-  - "politica educacional municipal"
-  - "permanencia de professores"
+  - "gestão educacional"
+  - "política educacional municipal"
+  - "permanência de professores"
 license: MIT
 version: "1.2.0"
 date-released: "2026-07-13"
