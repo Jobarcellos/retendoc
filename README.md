@@ -1,3 +1,9 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21343128.svg)](https://doi.org/10.5281/zenodo.21343128)
+
+# RegDoc — Monitor de Regularidade Docente
+
+**Aplicativo:** https://retendoc.streamlit.app
+...
 # RegDoc — Monitor de Regularidade Docente
 
 **Aplicativo:** https://retendoc.streamlit.app
