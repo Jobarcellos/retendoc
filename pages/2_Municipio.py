@@ -637,8 +637,9 @@ with aba1:
             brf_qw["FALTA"] = (ird - brf_qw["IRD"]).clip(lower=0)
             brf_qw = brf_qw.sort_values("FALTA")
 
-        # Pares
+        # Pares: posição + retrato do grupo (quem são, mediana, quanto falta)
         brf_pares_txt = "—"
+        brf_pares_sec = ""
         try:
             brf_dfp, _ = tabela_pares(ano_ref, rede_sel)
             brf_lin = brf_dfp[brf_dfp["CO_MUNICIPIO"] == co_mun]
@@ -650,6 +651,37 @@ with aba1:
                 if len(brf_grp) >= 10:
                     brf_pos = int(brf_grp.index[brf_grp["CO_MUNICIPIO"] == co_mun][0]) + 1
                     brf_pares_txt = f"{brf_pos}º de {len(brf_grp)} municípios parecidos"
+
+                    grp_mediana = brf_grp["IRD"].median()
+                    grp_topo = brf_grp["IRD"].iloc[0]
+                    ird_aqui = float(brf_lin["IRD"].iloc[0])
+                    faixa_icg_txt = str(brf_lin["FAIXA_ICG"].iloc[0])
+                    faixa_porte_txt = str(brf_lin["FAIXA_PORTE"].iloc[0])
+                    pct_melhor = (brf_pos - 1) / len(brf_grp) * 100
+
+                    if ird_aqui >= grp_mediana:
+                        frase_pos = (f"O município está na <strong>metade de cima</strong> do grupo: "
+                                     f"apenas {formatar_br(pct_melhor, 0)}% dos parecidos têm "
+                                     f"regularidade maior.")
+                    else:
+                        frase_pos = (f"O município está <strong>abaixo da mediana do grupo</strong> "
+                                     f"({formatar_br(grp_mediana)}): a distância até o meio da fila é "
+                                     f"de {formatar_br(grp_mediana - ird_aqui)} ponto(s) de IRD. "
+                                     f"Como os pares têm porte e complexidade parecidos, essa "
+                                     f"diferença dificilmente se explica pela estrutura da rede.")
+
+                    brf_pares_sec = f"""
+<div class="section"><h2>Como o município está entre os parecidos</h2>
+  <p style="font-size:13px;margin:0 0 0.4rem;">
+    Grupo de comparação: <strong>{len(brf_grp)} municípios</strong> com
+    {faixa_icg_txt} e {faixa_porte_txt} (na mesma seleção de rede).
+    Posição: <strong>{brf_pos}º de {len(brf_grp)}</strong> ·
+    IRD daqui: <strong>{formatar_br(ird_aqui)}</strong> ·
+    mediana do grupo: {formatar_br(grp_mediana)} ·
+    melhor do grupo: {formatar_br(grp_topo)}.
+  </p>
+  <p style="font-size:13px;margin:0;">{frase_pos}</p>
+</div>"""
         except Exception:
             pass
 
@@ -671,27 +703,87 @@ with aba1:
             except Exception:
                 pass
 
-        # Segmento mais frágil
+        # Indicadores da rede × Brasil (mesmo ano, mesma seleção de rede)
+        d_nac_ano = df_esc[df_esc["ANO"] == ano_ref]
+        if rede_sel != "Todas as redes":
+            d_nac_ano = d_nac_ano[d_nac_ano["NO_DEPENDENCIA"].astype(str) == rede_sel]
+        ind_defs = [
+            ("IRD", "Regularidade docente (0–5)", 3),
+            ("ICG", "Complexidade da gestão (1–6)", 2),
+            ("AFD", "Formação adequada (%)", 1),
+            ("IED", "Esforço docente (%)", 1),
+            ("ATU", "Alunos por turma", 1),
+        ]
+        ind_rows = ""
+        for col, rotulo, casas in ind_defs:
+            if col in brf_esc.columns and brf_esc[col].notna().any():
+                v_loc = brf_esc[col].mean()
+                v_nac = d_nac_ano[col].mean() if col in d_nac_ano.columns else float("nan")
+                ind_rows += (
+                    f"<tr><td>{rotulo}</td>"
+                    f"<td style='text-align:center'><strong>{formatar_br(v_loc, casas)}</strong></td>"
+                    f"<td style='text-align:center'>{formatar_br(v_nac, casas)}</td></tr>"
+                )
+        ind_section = (f"""
+<div class="section"><h2>Indicadores da rede em {ano_ref}</h2>
+<table><thead><tr><th>Indicador</th><th style="text-align:center">Sua rede</th>
+<th style="text-align:center">Brasil (mesma rede)</th></tr></thead>
+<tbody>{ind_rows}</tbody></table>
+<p class="nota">Médias das escolas do recorte. Complexidade e alunos por turma são contexto,
+não nota: valores altos explicam a dificuldade, não condenam a gestão.</p></div>""" if ind_rows else "")
+
+        # Onde a irregularidade se concentra: tabela por segmento
+        # (localização, etapas e — na visão "Todas as redes" — dependência)
         brf_seg_txt = "Sem leitura por segmento (poucas escolas)."
+        brf_seg_rows = ""
+        brf_seg_table = ""
         if brf_total >= 3:
             brf_media_loc = brf_esc["IRD"].mean()
             brf_segs = []
-            for zona, nome_z in [("Urbana", "escolas urbanas"), ("Rural", "escolas rurais")]:
-                g = brf_esc[brf_esc["TP_LOCALIZACAO"] == zona]
-                if len(g) >= 3: brf_segs.append((nome_z, g["IRD"].mean(), len(g)))
-            for flag, nome_e in [("IN_INF", "escolas com educação infantil"),
-                                 ("IN_FUND", "escolas com ensino fundamental"),
-                                 ("IN_MED", "escolas com ensino médio")]:
-                g = brf_esc[brf_esc[flag] == 1]
-                if len(g) >= 3: brf_segs.append((nome_e, g["IRD"].mean(), len(g)))
+
+            def add_seg(nome, g):
+                if len(g) >= 3:
+                    pct_al = (g["RISCO"] == "Alerta").mean() * 100
+                    brf_segs.append((nome, g["IRD"].mean(), len(g), pct_al))
+
+            if rede_sel == "Todas as redes" and "NO_DEPENDENCIA" in brf_esc.columns:
+                for dep in ["Municipal", "Estadual", "Privada", "Federal"]:
+                    add_seg(f"Rede {dep.lower()}",
+                            brf_esc[brf_esc["NO_DEPENDENCIA"].astype(str) == dep])
+            for zona, nome_z in [("Urbana", "Escolas urbanas"), ("Rural", "Escolas rurais")]:
+                add_seg(nome_z, brf_esc[brf_esc["TP_LOCALIZACAO"] == zona])
+            for flag, nome_e in [("IN_INF", "Com educação infantil"),
+                                 ("IN_FUND", "Com ensino fundamental"),
+                                 ("IN_MED", "Com ensino médio")]:
+                if flag in brf_esc.columns:
+                    add_seg(nome_e, brf_esc[brf_esc[flag] == 1])
+
             if brf_segs:
-                brf_pior = min(brf_segs, key=lambda s: s[1])
+                brf_segs.sort(key=lambda s: s[1])  # pior IRD primeiro
+                brf_seg_rows = "".join(
+                    f"<tr><td>{nome}</td>"
+                    f"<td style='text-align:center'>{n}</td>"
+                    f"<td style='text-align:center'>{formatar_br(v)}</td>"
+                    f"<td style='text-align:center'>{formatar_br(p_al, 0)}%</td></tr>"
+                    for nome, v, n, p_al in brf_segs
+                )
+                brf_seg_table = (
+                    "<table><thead><tr><th>Segmento</th>"
+                    "<th style='text-align:center'>Escolas</th>"
+                    "<th style='text-align:center'>IRD médio</th>"
+                    "<th style='text-align:center'>% em alerta</th>"
+                    "</tr></thead><tbody>" + brf_seg_rows + "</tbody></table>"
+                )
+                brf_pior = brf_segs[0]
                 if brf_pior[1] < brf_media_loc - 0.05:
-                    brf_seg_txt = (f"A menor regularidade está nas <strong>{brf_pior[0]}</strong> "
-                                   f"(IRD {formatar_br(brf_pior[1])}, {brf_pior[2]} escolas). "
-                                   f"Comece as ações de fixação de professores por elas.")
+                    brf_seg_txt = (f"A menor regularidade está no grupo <strong>{brf_pior[0].lower()}</strong> "
+                                   f"(IRD {formatar_br(brf_pior[1])}, {brf_pior[2]} escolas, "
+                                   f"{formatar_br(brf_pior[3], 0)}% em alerta). "
+                                   f"Comece as ações de fixação de professores por ele.")
                 else:
-                    brf_seg_txt = "Regularidade homogênea entre os segmentos da rede — sem grupo crítico isolado."
+                    brf_seg_txt = ("Regularidade parecida entre os segmentos — o problema está "
+                                   "espalhado pela rede, não concentrado num grupo. Isso pede "
+                                   "política geral de fixação, não intervenção pontual.")
 
         # Tabelas
         brf_prior = brf_alerta.head(5)
@@ -776,8 +868,15 @@ Não substitui o trabalho estrutural nas demais.</p></div>""" if not brf_qw.empt
   <div class="destaque">{tend_txt}</div>
 </div>
 
+{brf_pares_sec}
+
+{ind_section}
+
 <div class="section"><h2>Onde a irregularidade se concentra</h2>
-  <p style="font-size:13px;margin:0;">{brf_seg_txt}</p>
+  {brf_seg_table}
+  <p style="font-size:13px;margin:0.45rem 0 0;">{brf_seg_txt}</p>
+  <p class="nota">Uma mesma escola pode aparecer em mais de um grupo (ex.: urbana e com ensino
+  fundamental) — a tabela mostra recortes, não uma divisão exata da rede.</p>
 </div>
 
 {qw_section}
