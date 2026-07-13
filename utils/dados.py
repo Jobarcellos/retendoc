@@ -18,7 +18,7 @@ def agora_br():
 # Identidade e versionamento do artefato (exibidos na página Metodologia)
 VERSAO_APP = "1.2"
 FONTE_DADOS = "Indicadores Educacionais do Censo Escolar — Inep/MEC"
-COBERTURA = "5.570 municípios (2013–2025) e 209 mil+ escolas (2019–2025)"
+COBERTURA = "5.570 municípios e 209 mil+ escolas na série 2013–2025 (≈165 mil escolas por ano)"
 
 
 def aplicar_estilo_global():
@@ -375,8 +375,8 @@ def tabela_pares(ano_ref, rede="Todas as redes"):
     quartil nacional de complexidade (ICG) × faixa de porte da rede
     (nº de escolas da rede selecionada). Retorna (DataFrame, ano_usado_para_porte).
 
-    O porte vem da base de escolas (disponível a partir de 2019); para anos
-    anteriores usa-se o ano mais próximo disponível como proxy estrutural.
+    O porte vem da base de escolas, que cobre toda a série 2013–2025. Caso o ano
+    solicitado não exista na base, usa-se o ano mais próximo como proxy estrutural.
     """
     ano_ref = int(ano_ref)
     df = municipal_por_rede(rede)
