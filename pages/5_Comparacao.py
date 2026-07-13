@@ -6,9 +6,9 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-from utils.dados import carregar_escola, carregar_municipal, formatar_br, aplicar_estilo_global, sombrear_pandemia
+from utils.dados import carregar_escola, carregar_municipal, formatar_br, aplicar_estilo_global, sombrear_pandemia, icone_pagina
 
-st.set_page_config(page_title="Comparação · RegDoc", layout="wide")
+st.set_page_config(page_title="Comparação · RegDoc", page_icon=icone_pagina(), layout="wide")
 aplicar_estilo_global()
 
 st.markdown("""
