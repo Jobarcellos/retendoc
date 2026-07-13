@@ -1,7 +1,9 @@
+import base64
 import pandas as pd
 import numpy as np
 import streamlit as st
 from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 FUSO_BR = ZoneInfo("America/Sao_Paulo")
@@ -19,6 +21,62 @@ def agora_br():
 VERSAO_APP = "1.2"
 FONTE_DADOS = "Indicadores Educacionais do Censo Escolar — Inep/MEC"
 COBERTURA = "5.570 municípios e 209 mil+ escolas na série 2013–2025 (≈165 mil escolas por ano)"
+
+
+# ── Identidade visual ─────────────────────────────────────────────────────────
+# Os PNGs da marca vivem em assets/, na raiz do repositório — fora de utils/,
+# que é o pacote Python. Caminho resolvido a partir do próprio arquivo para
+# funcionar independentemente do diretório de trabalho do Streamlit Cloud.
+_ASSETS = Path(__file__).resolve().parent.parent / "assets"
+ICONE_FAVICON = _ASSETS / "icon-192.png"   # aba do navegador
+ICONE_LOGO    = _ASSETS / "icon-512.png"   # marca na barra lateral
+
+
+def icone_pagina():
+    """Favicon a passar para st.set_page_config(page_icon=...).
+
+    Se o arquivo não estiver no repositório, devolve o emoji antigo: uma falha
+    de asset degrada a aparência, nunca derruba a página."""
+    return str(ICONE_FAVICON) if ICONE_FAVICON.exists() else "📊"
+
+
+@st.cache_data
+def _logo_data_uri():
+    """Marca embutida em base64.
+
+    O Streamlit Cloud não serve arquivos estáticos por padrão (exigiria
+    enableStaticServing), então referenciar 'assets/icon-512.png' numa tag <img>
+    ou em background-image resultaria em 404. Embutir o PNG no próprio CSS
+    resolve sem depender de configuração de servidor. Cacheado: a conversão roda
+    uma vez por sessão, não a cada rerun."""
+    if not ICONE_LOGO.exists():
+        return None
+    return "data:image/png;base64," + base64.b64encode(ICONE_LOGO.read_bytes()).decode()
+
+
+def marca_sidebar():
+    """Troca o rótulo de texto do topo da barra lateral pela marca do RegDoc.
+
+    Sobrescreve a regra ::before definida no CSS global. Só é emitida se o PNG
+    existir — caso contrário, o rótulo '📊 RegDoc' permanece."""
+    logo = _logo_data_uri()
+    if not logo:
+        return
+    st.markdown(
+        "<style>"
+        '[data-testid="stSidebarNav"]::before {'
+        '  content: "" !important;'
+        "  height: 82px !important;"
+        f'  background-image: url("{logo}") !important;'
+        "  background-repeat: no-repeat !important;"
+        "  background-position: center 12px !important;"
+        "  background-size: 62px 62px !important;"
+        "  padding: 0 !important;"
+        "}"
+        "</style>",
+        unsafe_allow_html=True,
+    )
+
 
 
 def aplicar_estilo_global():
@@ -241,6 +299,10 @@ def aplicar_estilo_global():
         }
     </style>
     """, unsafe_allow_html=True)
+
+    # Marca no topo da barra lateral. Emitida depois do CSS global porque
+    # sobrescreve a regra ::before definida acima.
+    marca_sidebar()
 
 
 @st.cache_data
