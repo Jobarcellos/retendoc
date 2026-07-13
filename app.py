@@ -1,11 +1,12 @@
 import streamlit as st
 import sys, os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from utils.dados import carregar_municipal, calcular_anos_em_alerta, rotulo_cronicidade
+from utils.dados import (carregar_municipal, calcular_anos_em_alerta,
+                         rotulo_cronicidade, icone_pagina, marca_sidebar)
 
 st.set_page_config(
     page_title="RegDoc — Regularidade Docente",
-    page_icon="📊",
+    page_icon=icone_pagina(),   # marca do RegDoc; cai no emoji se o PNG sumir
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -100,10 +101,15 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# A home não usa aplicar_estilo_global() (tem CSS próprio, acima), então a marca
+# da barra lateral precisa ser chamada aqui. Sobrescreve o ::before definido no
+# bloco de estilos acima.
+marca_sidebar()
+
 # ── Cabeçalho ─────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="bloco-topo">
-    <h1>📊 RegDoc — Regularidade Docente</h1>
+    <h1>RegDoc — Regularidade Docente</h1>
     <p>Monitoramento da permanência dos professores nas redes municipais brasileiras · 2013–2025</p>
 </div>
 """, unsafe_allow_html=True)
