@@ -9,9 +9,9 @@ from datetime import datetime
 from utils.dados import (carregar_escola, carregar_municipal, formatar_br,
                          aplicar_estilo_global, classificar_tendencia,
                          render_tendencia, sombrear_pandemia, agora_br,
-                         faixa_inep)
+                         faixa_inep, icone_pagina)
 
-st.set_page_config(page_title="Escola · RegDoc", layout="wide")
+st.set_page_config(page_title="Escola · RegDoc", page_icon=icone_pagina(), layout="wide")
 
 st.markdown("""
 <style>
