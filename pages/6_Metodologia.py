@@ -142,8 +142,5 @@ st.markdown("""
   dados fiscais (Siope) — integrações previstas para versões futuras.
 """)
 
-st.markdown("---")
-st.caption("Dúvidas ou sugestões sobre a metodologia? Utilize os canais indicados na página inicial.")
-
 from utils.dados import rodape_institucional
 rodape_institucional()
