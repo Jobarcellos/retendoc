@@ -502,8 +502,7 @@ def rodape_institucional():
     st.markdown("""
     <div class="rodape-regdoc">
         <p><strong>RegDoc — Regularidade Docente</strong> · Fonte: Censo Escolar / Inep · Dados públicos, uso gratuito.</p>
-        <p>© 2026 <strong>Joelma Barcellos Santanna</strong> · Desenvolvido no Doutorado Profissional em
-        Administração e Contabilidade — linha Gestão Escolar — FUCAPE Business School.</p>
+        <p>© 2026 · Desenvolvido no Doutorado Profissional em Administração e Contabilidade — linha Gestão Escolar — FUCAPE Business School.</p>
     </div>
     """, unsafe_allow_html=True)
 
