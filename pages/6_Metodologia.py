@@ -94,9 +94,10 @@ trajetória pela **inclinação média anual**:
 | 📈 Melhora expressiva | ganho ≥ 0,15 |
 
 Além da tendência, o sistema dispara um **alerta de ruptura** sempre que o IRD cai
-**0,5 ponto ou mais de um ano para o outro**, em qualquer ponto da série — sinal de
-evento agudo (troca de gestão, fechamento de turnos, reorganização da rede) que
-merece investigação imediata.
+**0,5 ponto ou mais de um ano para o outro**, em qualquer ponto da série (o sistema
+exibe a primeira ocorrência). Como o IRD é calculado em janela móvel de cinco anos,
+o ano assinalado é o da queda do indicador, e não necessariamente o do evento que a
+provocou: trate o sinal como ponto de partida para a investigação local.
 
 **Anos pandêmicos (2020–2021):** os gráficos históricos sombreiam esse período.
 Os dados desses Censos refletem políticas emergenciais (suspensão de contratos,

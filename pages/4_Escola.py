@@ -139,7 +139,7 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
             [
                 "Mapeie a fragmentação da jornada docente. Professores com IED alto — "
                 "que atuam em muitas turmas, etapas ou turnos simultaneamente — têm vínculo "
-                "menor com a unidade e tendem a sair primeiro em escolas de alta complexidade.",
+                "menor com a unidade, o que pode aumentar o risco de saída em escolas de alta complexidade.",
                 "Avalie a distribuição de responsabilidades pedagógicas. Escolas com muitas "
                 "etapas e modalidades sobrecarregam coordenadores e diretores, "
                 "o que contamina o clima de trabalho e afeta a permanência dos professores.",
@@ -159,16 +159,16 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
             [
                 "Investigue as condições de acesso e infraestrutura. Escolas rurais de alta "
                 "complexidade combinam o isolamento territorial com a sobrecarga de gestão — "
-                "esse conjunto é o principal preditor de rotatividade neste perfil.",
+                "esse conjunto pode estar associado à rotatividade neste perfil; confirme localmente.",
                 "Acione a secretaria para políticas de incentivo territorial. Gratificações "
                 "de localização, transporte garantido e habitação próxima são fatores "
-                "diretamente associados à retenção em escolas rurais com alta complexidade.",
+                "possibilidades a avaliar para a retenção em escolas rurais com alta complexidade.",
                 "Verifique se os professores têm formação adequada para as etapas e modalidades "
                 "oferecidas. Alta complexidade em escola rural frequentemente inclui classes "
                 "multisseriadas ou EJA — professores sem preparo para essas modalidades "
-                "tendem a pedir transferência rapidamente.",
+                "podem ter maior propensão a pedir transferência.",
                 "Fortaleça o projeto pedagógico como âncora de pertencimento. Em contextos "
-                "rurais, o vínculo do professor com a comunidade é o principal fator de "
+                "rurais, o vínculo do professor com a comunidade pode contribuir para a "
                 "permanência quando as condições materiais são limitadas.",
                 "Monitore o IED dos professores. Jornada muito fragmentada entre escolas "
                 "rurais distintas indica que o vínculo com cada unidade é fraco "
@@ -180,26 +180,26 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
             [
                 "Investigue causas locais específicas. Escolas urbanas de baixa complexidade "
                 "em alerta são um sinal particular — o problema não é estrutural, "
-                "é provavelmente de clima organizacional ou gestão interna.",
+                "pode estar ligado a clima organizacional ou gestão interna — hipótese a verificar.",
                 "Compare com escolas de perfil similar no município usando o módulo "
                 "Comparação do RegDoc. Se escolas vizinhas de mesmo porte e etapa têm IRD "
-                "melhor, a causa está nesta unidade — não no território.",
+                "melhor, isso sugere que a explicação pode estar mais na unidade do que no território.",
                 "Converse com os professores que saíram nos últimos dois anos, se possível. "
-                "Em escolas de baixa complexidade, os motivos costumam ser mais "
+                "Em escolas de baixa complexidade, os motivos podem ser mais "
                 "identificáveis e endereçáveis pela gestão.",
                 "Avalie o estilo de liderança da gestão escolar. A literatura sobre retenção "
-                "docente mostra que o diretor é o fator mais determinante da permanência "
-                "em escolas menores (Boyd et al., 2011).",
-                "Construa um plano de ação com a equipe e defina uma meta de IRD para o "
-                "próximo Censo Escolar. Escolas de menor porte têm maior agilidade "
-                "para implementar mudanças e medir resultados.",
+                "docente associa a atuação do diretor à permanência dos professores "
+                "(Boyd et al., 2011).",
+                "Construa um plano de ação com a equipe e defina metas de acompanhamento. "
+                "O IRD usa janela de cinco anos e só é atualizado a cada Censo; "
+                "acompanhe as ações ao longo do ano.",
             ]
         ),
         ("alerta", "baixa", "rural"): (
             "Escola rural · Baixa complexidade · Alerta",
             [
                 "Priorize a investigação das condições de acesso. Escolas rurais pequenas "
-                "em alerta quase sempre têm rotatividade associada a dificuldades de "
+                "em alerta podem ter rotatividade associada a dificuldades de "
                 "transporte, distância ou infraestrutura — fatores que a gestão escolar "
                 "não resolve sozinha.",
                 "Acione a secretaria para avaliar políticas de fixação docente. Mesmo em "
@@ -209,7 +209,7 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "urbanas ou saíram da rede. Se é transferência interna, o problema é de "
                 "atratividade relativa — a escola precisa de diferencial para reter.",
                 "Envolva a comunidade local no projeto da escola. Em escolas rurais de "
-                "menor porte, o vínculo com a comunidade é o principal fator de retenção "
+                "menor porte, o vínculo com a comunidade pode contribuir para a retenção "
                 "quando as condições materiais não podem ser rapidamente melhoradas.",
             ]
         ),
@@ -254,7 +254,7 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "alerta. Em escolas urbanas de baixa complexidade, intervenções preventivas "
                 "têm custo baixo e impacto direto.",
                 "Verifique se há professores com menos de dois anos na escola. Alta "
-                "concentração de docentes recentes é o principal preditor de queda futura "
+                "concentração de docentes recentes pode indicar maior risco de queda futura "
                 "do IRD em escolas menores.",
                 "Fortaleça a integração de novos professores com a cultura da escola. "
                 "Programas de mentoria entre professores experientes e iniciantes "
@@ -330,7 +330,7 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "escola rural exige esforço contínuo — comunique esse resultado à secretaria "
                 "como indicador de gestão positiva.",
                 "Investigue os fatores de permanência. Em escolas rurais pequenas, o vínculo "
-                "com a comunidade local é frequentemente o principal fator — "
+                "com a comunidade local pode ser um fator relevante — "
                 "fortaleça esse elo ativamente.",
                 "Planeje a sucessão de professores próximos à aposentadoria para evitar "
                 "queda brusca do IRD nos próximos anos.",
@@ -695,7 +695,7 @@ def gerar_relatorio_escola():
             f"background:{tendencia['cor_fundo']};padding:10px 14px;border-radius:0 6px 6px 0;margin-bottom:1rem;'>"
             f"<strong>{tendencia['icone']} Tendência histórica</strong><br>"
             f"<span style='font-size:13px;'>{tendencia['texto']}</span>"
-            + (f"<br><span style='color:#c0392b;font-size:12px;'>⚠️ Ruptura detectada em {tendencia['ano_ruptura']}.</span>"
+            + (f"<br><span style='color:#c0392b;font-size:12px;'>⚠️ Ruptura sinalizada em {tendencia['ano_ruptura']} (ano da queda do indicador).</span>"
                if tendencia.get('ruptura') else "")
             + "</div>"
         )

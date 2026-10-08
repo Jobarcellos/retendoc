@@ -549,13 +549,13 @@ def classificar_tendencia(df, ano_ref, janela=5):
     if slope <= -0.15:
         return {"icone": "📉", "cor_fundo": "#fdedec", "cor_borda": "#c0392b",
                 "texto": f"Em queda acelerada — perdeu {abs(variacao):.2f} pontos desde {ano_ini} "
-                         f"({slope:.2f} pts/ano em média). Requer ação imediata.",
+                         f"({slope:.2f} pts/ano em média). Prioridade para investigação local.",
                 "ruptura": ruptura, "ano_ruptura": ano_ruptura}
     elif slope <= -0.05:
         return {"icone": "↘️", "cor_fundo": "#fef9e7", "cor_borda": "#f39c12",
                 "texto": f"Tendência de queda desde {ano_ini} "
                          f"({variacao:+.2f} pontos acumulados). "
-                         "Monitorar com atenção — se mantida, atingirá nível crítico.",
+                         "Monitorar com atenção e investigar o contexto local.",
                 "ruptura": ruptura, "ano_ruptura": ano_ruptura}
     elif slope < 0.05:
         return {"icone": "➡️", "cor_fundo": "#f0f4f8", "cor_borda": "#7f8c8d",
@@ -567,13 +567,13 @@ def classificar_tendencia(df, ano_ref, janela=5):
         return {"icone": "↗️", "cor_fundo": "#eafaf1", "cor_borda": "#27ae60",
                 "texto": f"Em recuperação desde {ano_ini} "
                          f"(+{variacao:.2f} pontos acumulados). "
-                         "Ações de retenção docente parecem estar surtindo efeito.",
+                         "Confirme com a escola ou a rede o que mudou antes de atribuir a causa.",
                 "ruptura": False, "ano_ruptura": None}
     else:
         return {"icone": "📈", "cor_fundo": "#eafaf1", "cor_borda": "#27ae60",
                 "texto": f"Melhora expressiva desde {ano_ini} "
                          f"(+{variacao:.2f} pontos, média de +{slope:.2f} pts/ano). "
-                         "Documentar as práticas que estão gerando esse resultado.",
+                         "Vale investigar o que pode explicar essa melhora e documentar as práticas.",
                 "ruptura": False, "ano_ruptura": None}
 
 
@@ -585,7 +585,7 @@ def render_tendencia(tendencia):
         ruptura_html = (
             f"<br><span style='color:#c0392b; font-size:0.85rem;'>"
             f"⚠️ Ruptura detectada em {tendencia['ano_ruptura']}: "
-            f"queda brusca neste ano. Verificar causa.</span>"
+            f"ano em que o indicador caiu (janela de 5 anos; não é necessariamente o ano do evento). Investigue localmente.</span>"
         )
     st.markdown(
         f"<div class='tendencia-box' style='background:{tendencia['cor_fundo']}; "
@@ -687,8 +687,8 @@ def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
         f"conforme a rede. <b>Favorável</b>: a escola tem regularidade igual ou acima da média "
         f"nacional ({formatar_br(media_nac, 3)}). <b>Atenção</b>: está acima da média do próprio "
         f"município ({formatar_br(ird_mun, 3)}), mas ainda abaixo da nacional. <b>Alerta</b>: "
-        f"está abaixo da média da sua própria rede — ou seja, perde professores mais rápido "
-        f"que a média das escolas vizinhas, sob a mesma gestão e as mesmas regras."
+        f"está abaixo da média da sua própria rede — ou seja, sua regularidade é menor "
+        f"que a média das escolas do município. A causa deve ser investigada localmente."
     )
 
     if total >= 2:

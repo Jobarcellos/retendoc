@@ -535,7 +535,7 @@ with aba1:
                 f"<strong>{tendencia['icone']} Tendência histórica</strong><br>"
                 f"<span style='font-size:13px;'>{tendencia['texto']}</span>"
                 + (f"<br><span style='color:#c0392b;font-size:12px;'>"
-                   f"⚠️ Ruptura detectada em {tendencia['ano_ruptura']}.</span>"
+                   f"⚠️ Ruptura sinalizada em {tendencia['ano_ruptura']} (ano da queda do indicador).</span>"
                    if tendencia.get("ruptura") else "")
                 + "</div>"
             )
@@ -801,8 +801,8 @@ não nota: valores altos explicam a dificuldade, não condenam a gestão.</p></d
 <div class="section"><h2>🎯 Vitórias rápidas — {len(brf_qw)} escola(s) a menos de 5% de sair do alerta</h2>
 <table><thead><tr><th>Escola</th><th>IRD</th><th>Quanto falta</th></tr></thead>
 <tbody>{qw_rows}</tbody></table>
-<p class="nota">Prioridade tática: pouco esforço tira essas escolas da faixa vermelha.
-Não substitui o trabalho estrutural nas demais.</p></div>""" if not brf_qw.empty else "")
+<p class="nota">Informação complementar: a distância até o limiar pode ser menor que a oscilação
+normal do indicador e não define, por si, a prioridade.</p></div>""" if not brf_qw.empty else "")
 
         tend_txt = f"{tendencia['icone']} {tendencia['texto']}" if tendencia else "Série insuficiente para tendência."
         rede_txt = "todas as redes" if rede_sel == "Todas as redes" else f"rede {rede_sel.lower()}"
@@ -1108,8 +1108,8 @@ with aba2:
                         <strong style="color:#1e8449;">🎯 Vitórias rápidas:
                         {len(df_qw)} escola(s) muito perto de sair do alerta.</strong>
                         <span style="color:#333;"> Estão a menos de 5% do limiar —
-                        com pouco esforço de retenção, saem da faixa vermelha e melhoram
-                        o resultado da rede já no próximo Censo.</span>
+                        informação complementar: essa distância pode ser menor que a oscilação
+                        normal do indicador e não define, por si, a prioridade.</span>
                     </div>""",
                     unsafe_allow_html=True
                 )
@@ -1125,8 +1125,8 @@ with aba2:
                     st.dataframe(tab_qw, use_container_width=True, hide_index=True)
                     st.caption(
                         f"Limiar de alerta desta rede: média municipal de {formatar_br(ird, 3)}. "
-                        "Priorizar escolas próximas do limiar gera resultado visível rápido — "
-                        "mas não substitui o trabalho estrutural nas escolas mais distantes dele. "
+                        "A proximidade do limiar é informação complementar e não define prioridade: "
+                        "a diferença pode ser menor que a oscilação normal do indicador. "
                         "Consulte a página Escola para as orientações por perfil de cada unidade."
                     )
 
