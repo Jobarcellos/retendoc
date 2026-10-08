@@ -62,7 +62,7 @@ with col3:
     st.markdown("""
     <div class="card-nav">
         <h4>⚠️ Ranking de Atenção</h4>
-        <p>Municípios priorizados por risco à regularidade docente, com base nos determinantes do modelo estimado.</p>
+        <p>Municípios priorizados por risco à regularidade docente, com base na posição do IRD frente à média nacional.</p>
     </div>
     """, unsafe_allow_html=True)
 
