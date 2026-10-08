@@ -66,16 +66,4 @@ with col3:
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("---")
-st.markdown("""
-**Sobre o RegDoc**
-
-Este instrumento foi desenvolvido como produto de pesquisa acadêmica sobre os determinantes
-da regularidade docente nas escolas públicas brasileiras (2013–2025). Os dados provêm dos
-indicadores educacionais do Censo Escolar/Inep. A classificação de risco é baseada em modelo
-de regressão com efeitos fixos estimado sobre painel balanceado de 5.570 municípios.
-
-O único preditor robusto e teoricamente consistente identificado foi a **média de alunos por turma (ATU)**:
-turmas mais numerosas reduzem a regularidade docente (β = −0,0085; p < 0,001).
-""")
 
