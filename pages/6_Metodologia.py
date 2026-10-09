@@ -8,7 +8,7 @@ st.set_page_config(page_title="Metodologia · RegDoc", page_icon=icone_pagina(),
 aplicar_estilo_global()
 
 st.title("📋 Metodologia e Notas Técnicas")
-st.caption("Como o RegDoc calcula, classifica e sinaliza — em linguagem de gestão, sem caixa-preta")
+st.caption("Como o RegDoc calcula, classifica e sinaliza, em linguagem de gestão")
 
 st.markdown(f"""
 **Versão do aplicativo:** {VERSAO_APP} · **Fonte dos dados:** {FONTE_DADOS} · **Cobertura:** {COBERTURA}
