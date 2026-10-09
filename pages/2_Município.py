@@ -81,14 +81,7 @@ TOOLTIPS = {
         "Fonte: Censo Escolar/INEP."
     ),
     "IED": (
-        "IED — Indicador de Esforço Docente. "
-        "Mede a complexidade da jornada de trabalho dos professores, considerando "
-        "quantas escolas, turnos, disciplinas e alunos cada professor atende. "
-        "Atenção: o IED NÃO indica diretamente duplo vínculo empregatício. "
-        "Valores altos sugerem jornada fragmentada, o que pode reduzir "
-        "o vínculo do professor com a escola. "
-        "Escala de 1 (menor esforço) a 6 (maior esforço). "
-        "Fonte: Censo Escolar/INEP."
+        "IED — Indicador de Esforço Docente (Inep). O Inep classifica cada docente em seis níveis de esforço, de 1 (menor) a 6 (maior), combinando escolas, turnos, etapas e alunos atendidos. O RegDoc mostra o percentual de docentes no Nível 1, o de menor esforço: quanto MAIOR o valor, MENOS docentes com jornada fragmentada ou com muitos alunos. Não é o indicador oficial do Inep, que destaca os docentes de esforço elevado. Não indica duplo vínculo. Fonte: Censo Escolar/Inep, Nota Técnica nº 039/2014."
     ),
     "ICG": (
         "ICG — Indicador de Complexidade de Gestão da Escola. "
@@ -271,7 +264,7 @@ with aba1:
         st.markdown(f"""
         <div style="border:1px solid #dde4ed; border-radius:8px; padding:1rem 1.2rem; background:#f7f9fc;">
             <div style="font-size:0.9rem; font-weight:600; color:#1a3a5c; margin-bottom:4px;">
-                Esforço docente (IED)
+                Docentes de menor esforço (IED)
                 <span class="tooltip-wrap"><span class="info-icon">i</span>
                 <span class="tip">{TOOLTIPS['IED']}</span></span>
             </div>
@@ -500,7 +493,7 @@ with aba1:
     st.markdown("### Série histórica completa")
     df_tab = df_mun[["ANO","IRD","ATU","AFD","IED","ICG"]].copy()
     df_tab = df_tab.rename(columns={"ANO":"Ano","IRD":"Regularidade (0-5)",
-        "ATU":"Alunos/turma","AFD":"Formação (%)","IED":"Sobrecarga (%)","ICG":"Complexidade"})
+        "ATU":"Alunos/turma","AFD":"Formação (%)","IED":"Menor esforço (%)","ICG":"Complexidade"})
     for col in df_tab.columns[1:]:
         df_tab[col] = df_tab[col].apply(lambda x: formatar_br(x, 1))
     st.dataframe(df_tab.set_index("Ano"), use_container_width=True)
@@ -588,7 +581,7 @@ with aba1:
 {tend_html}
 <div class="section"><h2>Série histórica completa</h2>
   <table><thead><tr><th>Ano</th><th>Regularidade</th><th>Variação</th>
-  <th>Alunos/turma</th><th>Formação (%)</th><th>Sobrecarga (%)</th><th>Complexidade</th></tr></thead>
+  <th>Alunos/turma</th><th>Formação (%)</th><th>Menor esforço (%)</th><th>Complexidade</th></tr></thead>
   <tbody>{rows}</tbody></table>
 </div>
 <div class="section"><h2>O que fazer — situação de {situacao}</h2>
@@ -711,7 +704,7 @@ with aba1:
             ("IRD", "Regularidade docente (0–5)", 3),
             ("ICG", "Complexidade da gestão (1–6)", 2),
             ("AFD", "Formação adequada (%)", 1),
-            ("IED", "Esforço docente (%)", 1),
+            ("IED", "Menor esforço docente (%)", 1),
             ("ATU", "Alunos por turma", 1),
         ]
         ind_rows = ""
@@ -1177,7 +1170,7 @@ with aba2:
             "ICG":            "Complexidade",
             "ATU":            "Alunos/turma",
             "AFD":            "Formação (%)",
-            "IED":            "Esforço docente (%)",
+            "IED":            "Menor esforço docente (%)",
         })
         df_tab_esc.index = df_tab_esc.index + 1
         df_tab_esc.index.name = "Posição"
@@ -1337,7 +1330,7 @@ with aba2:
   <tr><td>Complexidade (ICG)</td><td>{formatar_br(icg_esc, 2) if pd.notna(icg_esc) else "—"}</td></tr>
   <tr><td>Alunos/turma (ATU)</td><td>{formatar_br(atu_esc, 1) if pd.notna(atu_esc) else "—"}</td></tr>
   <tr><td>Formação adequada (AFD)</td><td>{formatar_br(afd_esc, 1) if pd.notna(afd_esc) else "—"}%</td></tr>
-  <tr><td>Esforço docente (IED)</td><td>{formatar_br(ied_esc, 1) if pd.notna(ied_esc) else "—"}%</td></tr>
+  <tr><td>Docentes de menor esforço (IED)</td><td>{formatar_br(ied_esc, 1) if pd.notna(ied_esc) else "—"}%</td></tr>
 </table>
 <p style='font-size:11px;color:#aaa;margin-top:1.5rem;'>
   RegDoc · Censo Escolar/INEP · retendoc.streamlit.app<br>

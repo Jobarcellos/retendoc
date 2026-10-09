@@ -732,9 +732,9 @@ def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
         "apoio estrutural, a segunda costuma responder a ajustes de gestão. "
         "<b>Alunos por turma</b> indica a carga de sala. "
         "<b>Formação (%)</b> é a proporção de professores com formação adequada à disciplina "
-        "que lecionam. <b>Esforço docente (%)</b> mede o desgaste: quantos turnos, turmas, "
-        "escolas e alunos cada professor acumula — quanto mais alto, mais espalhado está o "
-        "professor, e maior a chance de ele sair."
+        "que lecionam. <b>Menor esforço docente (%)</b> é a proporção de professores no nível mais baixo de esforço do Inep "
+        "(uma escola, um turno, uma etapa e poucos alunos). Quanto mais baixo, mais professores "
+        "atuam em mais de um turno, escola ou etapa, ou com mais alunos."
     )
 
     ctx = []
@@ -745,7 +745,7 @@ def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
     if pd.notna(afd_m):
         ctx.append(f"{formatar_br(afd_m, 1)}% de formação adequada")
     if pd.notna(ied_m):
-        ctx.append(f"{formatar_br(ied_m, 1)}% de esforço docente")
+        ctx.append(f"{formatar_br(ied_m, 1)}% de docentes de menor esforço")
     if ctx and total >= 2:
         p3 += f" Na média deste recorte: {', '.join(ctx)}."
 
@@ -757,7 +757,7 @@ def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
         fv = d[d["RISCO"] == "Favorável"]
         pistas = []
         for col, rotulo, casas, sufixo in [
-            ("IED", "esforço docente", 1, "%"),
+            ("IED", "proporção de docentes de menor esforço", 1, "%"),
             ("ICG", "complexidade", 2, ""),
             ("ATU", "alunos por turma", 1, ""),
             ("AFD", "formação adequada", 1, "%"),

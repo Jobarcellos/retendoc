@@ -134,6 +134,33 @@ st.markdown("""
   apresentar anos ausentes — nesses casos, desconfie de "quedas" em séries curtas.
 """)
 
+st.markdown("### 5b. Como os valores de município são calculados")
+st.markdown("""
+**Escolas:** os valores de IRD, ICG, AFD, IED e ATU de cada escola são os publicados
+pelo Inep, sem recálculo. Foram conferidos contra as planilhas originais, de 2013 a 2025.
+O ATU das escolas aparece vazio em 2016–2018, embora exista nas planilhas do Inep.
+
+**Municípios:** a base reúne **todas as redes** (federal, estadual, municipal e privada).
+
+- **AFD, IED e ATU:** são os valores municipais **publicados pelo Inep** (linha "Total"
+  de localização e dependência administrativa), sem recálculo.
+- **IRD:** o Inep não publica um valor único por município (só o percentual de escolas
+  por faixa). O RegDoc usa a **média simples do IRD das escolas** do município.
+- **ICG:** o Inep publica o percentual de escolas por nível de complexidade. O RegDoc
+  usa o **nível médio**, ponderado por esse percentual.
+- **IED:** o Inep classifica cada docente em seis níveis de esforço, de 1 (menor) a 6
+  (maior), combinando escolas, turnos, etapas e alunos atendidos. O RegDoc mostra o
+  percentual de docentes no **Nível 1**, o de menor esforço: quanto maior o percentual,
+  menos docentes de esforço elevado.
+  O indicador oficial do Inep destaca, ao contrário, os docentes de esforço elevado
+  (Níveis 5 e 6 nos anos iniciais; Nível 6 nos anos finais e no ensino médio).
+  Fonte: Nota Técnica Inep nº 039/2014.
+
+**O que isso significa para você:** a média simples do IRD dá o mesmo peso a uma escola
+pequena e a uma grande. Use o IRD municipal para comparar e priorizar redes, e os valores
+de escola para olhar cada unidade.
+""")
+
 st.markdown("### 6. O que o RegDoc não faz")
 st.markdown("""
 - Não substitui o diálogo com os professores nem captura causas subjetivas da
