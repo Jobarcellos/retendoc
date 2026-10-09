@@ -138,10 +138,7 @@ st.markdown("### 5b. Como os valores de município são calculados")
 st.markdown("""
 **Escolas:** os valores de IRD, ICG, AFD, IED e ATU de cada escola são os publicados
 pelo Inep, sem recálculo. Foram conferidos contra as planilhas originais, de 2013 a 2025.
-Nas planilhas de 2016 a 2018 o cabeçalho técnico do ATU traz as colunas de código e nome da
-escola em ordem trocada em relação aos dados. O RegDoc lê o ATU desses anos pela posição real
-das colunas. Escolas sem ATU nas planilhas do Inep (por exemplo, sem turmas de ensino
-fundamental) aparecem sem valor.
+Escolas sem ATU publicado pelo Inep aparecem sem valor.
 
 **Municípios:** a base reúne **todas as redes** (federal, estadual, municipal e privada).
 
