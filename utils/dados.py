@@ -331,6 +331,22 @@ def carregar_escola():
     df["SG_UF"] = df["SG_UF"].fillna("??")
     df["NO_ENTIDADE"] = df["NO_ENTIDADE"].fillna("Escola não identificada")
 
+    # ATU de 2016–2018: nas planilhas do Inep desses anos, o cabeçalho técnico traz
+    # NO_ENTIDADE/CO_ENTIDADE em ordem trocada em relação aos dados, e a consolidação
+    # original não casou as escolas (ATU vazio). O arquivo abaixo traz o ATU lido pela
+    # posição real das colunas. Só preenche o que está vazio; nunca sobrescreve.
+    try:
+        _atu = pd.read_parquet("atu_2016_2018.parquet")
+        _atu["CO_ENTIDADE"] = _atu["CO_ENTIDADE"].astype(str)
+        _atu["ANO"] = _atu["ANO"].astype(int)
+        _atu["ATU"] = _atu["ATU"].astype("float64").round(1)
+        df = df.merge(_atu.rename(columns={"ATU": "_ATU_INEP"}),
+                      on=["CO_ENTIDADE", "ANO"], how="left")
+        df["ATU"] = df["ATU"].fillna(df["_ATU_INEP"])
+        df = df.drop(columns=["_ATU_INEP"])
+    except FileNotFoundError:
+        pass
+
     # Nome do município: o Censo grava em CAIXA ALTA e sem acento até 2015, e em caixa
     # mista com acento a partir de 2016 — por isso o mesmo município aparecia duas vezes
     # nas listas de seleção. Adota-se o nome da base municipal (grafia oficial do IBGE,
