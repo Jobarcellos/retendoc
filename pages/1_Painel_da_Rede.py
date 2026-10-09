@@ -55,11 +55,7 @@ TOOLTIP_AFD = (
 )
 
 TOOLTIP_IED = (
-    "IED — Indicador de Esforço Docente. "
-    "Mede a complexidade da jornada — escolas, turnos e disciplinas simultâneas. "
-    "Valores altos sugerem jornada fragmentada, o que pode reduzir "
-    "o vínculo do professor com a escola. "
-    "Fonte: Censo Escolar/INEP."
+    "IED — Indicador de Esforço Docente (Inep). O Inep classifica cada docente em seis níveis de esforço, de 1 (menor) a 6 (maior), combinando escolas, turnos, etapas e alunos atendidos. O RegDoc mostra o percentual de docentes no Nível 1, o de menor esforço: quanto MAIOR o valor, MENOS docentes com jornada fragmentada ou com muitos alunos. Não é o indicador oficial do Inep, que destaca os docentes de esforço elevado. Não indica duplo vínculo. Fonte: Censo Escolar/Inep, Nota Técnica nº 039/2014."
 )
 
 def tooltip_html(sigla, tip):
@@ -131,7 +127,7 @@ m3.markdown(
 m4.markdown(
     f"<div style='text-align:center;'>"
     f"<p style='font-size:1.8rem;font-weight:bold;color:#1a3a5c;margin:0;'>{formatar_br(ied_medio,1)}%</p>"
-    f"<p style='font-size:0.8rem;color:#777;margin:0;'>Esforço docente "
+    f"<p style='font-size:0.8rem;color:#777;margin:0;'>Docentes de menor esforço "
     f"{tooltip_html('IED', TOOLTIP_IED)}</p></div>",
     unsafe_allow_html=True
 )

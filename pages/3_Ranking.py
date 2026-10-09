@@ -144,7 +144,7 @@ df_tabela = df_tabela.rename(columns={
     "NO_MUNICIPIO":"Município","SG_UF":"Estado",
     "IRD":"Regularidade","CRONICIDADE":"Há quanto tempo em alerta",
     "ATU":"Alunos/turma",
-    "AFD":"Formação (%)","IED":"Esforço docente (%)","ICG":"Complexidade","RISCO":"Situação"
+    "AFD":"Formação (%)","IED":"Menor esforço docente (%)","ICG":"Complexidade","RISCO":"Situação"
 })
 st.dataframe(df_tabela, use_container_width=True, hide_index=True)
 

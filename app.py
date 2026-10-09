@@ -249,7 +249,7 @@ with col2:
         <h4>🔍 Município</h4>
         <p>Acompanhe a evolução de um município e compare com médias nacionais e estaduais. Veja também o ranking de todas as escolas da rede.</p>
     </div>""", unsafe_allow_html=True)
-    st.page_link("pages/2_Municipio.py", label="Acessar →")
+    st.page_link("pages/2_Município.py", label="Acessar →")
 
 with col3:
     st.markdown("""
@@ -273,7 +273,7 @@ with col5:
         <h4>📊 Comparação</h4>
         <p>Compare até 20 escolas ou até 10 municípios com evolução histórica. Gráfico radar para grupos pequenos, tabela interativa para grupos maiores.</p>
     </div>""", unsafe_allow_html=True)
-    st.page_link("pages/5_Comparacao.py", label="Acessar →")
+    st.page_link("pages/5_Comparação.py", label="Acessar →")
 
 # ── Por que monitorar ──────────────────────────────────────────────────────────
 st.markdown("---")

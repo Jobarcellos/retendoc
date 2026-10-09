@@ -83,18 +83,7 @@ TOOLTIPS = {
         "Fonte: Censo Escolar/INEP."
     ),
     "IED": (
-        "IED — Indicador de Esforço Docente. "
-        "Mede a complexidade da jornada de trabalho dos professores, considerando "
-        "quantas escolas, turnos, disciplinas e alunos cada professor atende "
-        "simultaneamente. Classifica o docente em 6 níveis (1 a 6). "
-        "Atenção: o IED NÃO indica diretamente duplo vínculo empregatício — "
-        "um professor pode ter IED alto atuando apenas em uma rede pública "
-        "com muitas turmas. "
-        "Valores altos sugerem jornada mais fragmentada, o que pode reduzir "
-        "o vínculo do professor com a escola e contribuir para a rotatividade. "
-        "Nível 1 = menor esforço (até 25 alunos, 1 turno, 1 escola); "
-        "Nível 6 = maior esforço (mais de 400 alunos, múltiplos turnos e escolas). "
-        "Fonte: Censo Escolar/INEP."
+        "IED — Indicador de Esforço Docente (Inep). O Inep classifica cada docente em seis níveis de esforço, de 1 (menor) a 6 (maior), combinando escolas, turnos, etapas e alunos atendidos. O RegDoc mostra o percentual de docentes no Nível 1, o de menor esforço: quanto MAIOR o valor, MENOS docentes com jornada fragmentada ou com muitos alunos. Não é o indicador oficial do Inep, que destaca os docentes de esforço elevado. Não indica duplo vínculo. Fonte: Censo Escolar/Inep, Nota Técnica nº 039/2014."
     ),
     "ICG": (
         "ICG — Indicador de Complexidade de Gestão da Escola. "
@@ -137,8 +126,8 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
         ("alerta", "alta", "urbana"): (
             "Escola urbana · Alta complexidade · Alerta",
             [
-                "Mapeie a fragmentação da jornada docente. Professores com IED alto — "
-                "que atuam em muitas turmas, etapas ou turnos simultaneamente — têm vínculo "
+                "Mapeie a fragmentação da jornada docente. Professores que atuam em muitas turmas, etapas ou turnos "
+                "simultaneamente — nos níveis mais altos de esforço do Inep — têm vínculo "
                 "menor com a unidade, o que pode aumentar o risco de saída em escolas de alta complexidade.",
                 "Avalie a distribuição de responsabilidades pedagógicas. Escolas com muitas "
                 "etapas e modalidades sobrecarregam coordenadores e diretores, "
@@ -170,9 +159,9 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "Fortaleça o projeto pedagógico como âncora de pertencimento. Em contextos "
                 "rurais, o vínculo do professor com a comunidade pode contribuir para a "
                 "permanência quando as condições materiais são limitadas.",
-                "Monitore o IED dos professores. Jornada muito fragmentada entre escolas "
-                "rurais distintas indica que o vínculo com cada unidade é fraco "
-                "e a saída se torna mais provável.",
+                "Monitore o percentual de docentes de menor esforço (IED). Queda nesse percentual "
+                "pode indicar jornada mais fragmentada entre escolas rurais distintas, "
+                "vínculo mais fraco com cada unidade e saída mais provável.",
             ]
         ),
         ("alerta", "baixa", "urbana"): (
@@ -224,7 +213,7 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "acumuladas — o esgotamento é silencioso e percebido tardiamente.",
                 "Identifique os professores em risco de saída. Em escolas maiores, há sempre "
                 "um grupo com menos vínculo institucional — chegaram recentemente, atuam em "
-                "poucas horas ou têm IED alto. São os primeiros a sair.",
+                "poucas horas ou têm jornada fragmentada entre escolas ou turnos. São os primeiros a sair.",
                 "Fortaleça momentos de reconhecimento coletivo. Professores de escolas "
                 "urbanas de alta complexidade relatam frequentemente invisibilidade dentro "
                 "da própria instituição como razão para considerar a saída.",
@@ -288,7 +277,7 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "Não reduza o esforço de gestão. Escolas bem-sucedidas frequentemente "
                 "revertem ganhos após atingir bons resultados — a estabilidade "
                 "exige manutenção ativa.",
-                "Monitore o IED dos professores. Alta complexidade urbana com IRD alto "
+                "Monitore o percentual de docentes de menor esforço (IED). Alta complexidade urbana com IRD alto "
                 "pode mudar rapidamente se a secretaria redistribuir professores experientes "
                 "para outras unidades ou aumentar a carga de trabalho.",
             ]
@@ -553,7 +542,7 @@ if len(anos_disp) >= 2:
             st.markdown("**Evolução dos indicadores associados:**")
 
             inds = []
-            for sigla, nome in [("ATU","Alunos/turma"),("AFD","Formação (%)"),("IED","Esforço docente (%)"),("ICG","Complexidade")]:
+            for sigla, nome in [("ATU","Alunos/turma"),("AFD","Formação (%)"),("IED","Menor esforço docente (%)"),("ICG","Complexidade")]:
                 if sigla in df_escola.columns:
                     v_ref  = linha.get(sigla)
                     v_comp = linha_comp.get(sigla)
@@ -608,14 +597,14 @@ with col1:
 
 with col2:
     ied_i = (
-        "Jornada docente com alto nível de fragmentação."
-        if pd.notna(ied) and ied >= 50
-        else "Nível intermediário de fragmentação da jornada docente."
-        if pd.notna(ied) and ied >= 25
-        else "Jornada docente menos fragmentada."
+        "Nenhum docente da escola está no Nível 1, o de menor esforço: todos atuam nos Níveis 2 a 6 "
+        "(mais de um turno, escola ou etapa, ou mais alunos)."
+        if pd.notna(ied) and ied == 0
+        else f"{formatar_br(ied,1)}% dos docentes estão no Nível 1, o de menor esforço. "
+             "Os demais estão nos Níveis 2 a 6."
         if pd.notna(ied) else "Não disponível."
     )
-    card_com_tooltip("Esforço docente — IED", "IED", formatar_br(ied,1) + ("%" if pd.notna(ied) else ""), ied_i)
+    card_com_tooltip("Docentes de menor esforço — IED", "IED", formatar_br(ied,1) + ("%" if pd.notna(ied) else ""), ied_i)
 
     icg_i = (
         "Escola de alta complexidade — oferece muitos turnos, etapas ou modalidades."
@@ -714,8 +703,8 @@ def gerar_relatorio_escola():
         <tr><td style="padding:7px 8px;border-bottom:1px solid #eee;">Formação adequada (AFD)</td>
             <td style="padding:7px 8px;border-bottom:1px solid #eee;">% de professores na área de formação</td>
             <td style="padding:7px 8px;border-bottom:1px solid #eee;">{formatar_br(afd,1)}%</td></tr>
-        <tr><td style="padding:7px 8px;border-bottom:1px solid #eee;">Esforço docente (IED)</td>
-            <td style="padding:7px 8px;border-bottom:1px solid #eee;">Complexidade da jornada docente (1–6)</td>
+        <tr><td style="padding:7px 8px;border-bottom:1px solid #eee;">Docentes de menor esforço (IED)</td>
+            <td style="padding:7px 8px;border-bottom:1px solid #eee;">% de docentes no Nível 1 (menor esforço) do Inep</td>
             <td style="padding:7px 8px;border-bottom:1px solid #eee;">{formatar_br(ied,1)}%</td></tr>
         <tr><td style="padding:7px 8px;">Complexidade da escola (ICG)</td>
             <td style="padding:7px 8px;">Porte, turnos, etapas e modalidades (1–6)</td>
