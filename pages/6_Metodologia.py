@@ -45,11 +45,9 @@ IRD no ano de referência**:
 **Por que relativa?** Para priorizar, a cada ciclo, quem está mais atrás do país —
 independentemente de quanto a média geral suba ou desça.
 
-**Consequência que você deve conhecer:** como o critério acompanha a média do ano,
-as **contagens de alerta de anos diferentes não são diretamente comparáveis**.
-Um município pode entrar em alerta sem que seu IRD caia, se a média nacional subir.
-Para acompanhar a evolução da sua rede ao longo do tempo, use o **valor do IRD** e a
-**tendência histórica**, não a cor do semáforo.
+**Para acompanhar a evolução:** a cor do semáforo mostra a posição da rede em relação à
+média nacional **naquele ano**. Para ver como a rede evolui ao longo do tempo, use o
+**valor do IRD** e a **tendência histórica**.
 """)
 
 st.markdown("### 2b. As duas classificações: faixa oficial do Inep × situação na sua rede")
