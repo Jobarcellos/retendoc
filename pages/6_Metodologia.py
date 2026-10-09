@@ -45,11 +45,9 @@ IRD no ano de referência**:
 **Por que relativa?** Para priorizar, a cada ciclo, quem está mais atrás do país —
 independentemente de quanto a média geral suba ou desça.
 
-**Consequência que você deve conhecer:** como o critério acompanha a média do ano,
-as **contagens de alerta de anos diferentes não são diretamente comparáveis**.
-Um município pode entrar em alerta sem que seu IRD caia, se a média nacional subir.
-Para acompanhar a evolução da sua rede ao longo do tempo, use o **valor do IRD** e a
-**tendência histórica**, não a cor do semáforo.
+**Para acompanhar a evolução:** a cor do semáforo mostra a posição da rede em relação à
+média nacional **naquele ano**. Para ver como a rede evolui ao longo do tempo, use o
+**valor do IRD** e a **tendência histórica**.
 """)
 
 st.markdown("### 2b. As duas classificações: faixa oficial do Inep × situação na sua rede")
@@ -138,7 +136,7 @@ st.markdown("### 5b. Como os valores de município são calculados")
 st.markdown("""
 **Escolas:** os valores de IRD, ICG, AFD, IED e ATU de cada escola são os publicados
 pelo Inep, sem recálculo. Foram conferidos contra as planilhas originais, de 2013 a 2025.
-O ATU das escolas aparece vazio em 2016–2018, embora exista nas planilhas do Inep.
+Escolas sem ATU publicado pelo Inep aparecem sem valor.
 
 **Municípios:** a base reúne **todas as redes** (federal, estadual, municipal e privada).
 
