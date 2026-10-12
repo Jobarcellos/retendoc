@@ -9,7 +9,7 @@ from datetime import datetime
 from utils.dados import (carregar_escola, carregar_municipal, formatar_br,
                          aplicar_estilo_global, classificar_tendencia,
                          render_tendencia, sombrear_pandemia, agora_br,
-                         faixa_inep, icone_pagina)
+                         faixa_inep, icone_pagina, distancia_media)
 from utils.ied import (TOOLTIP_IED, ETAPAS, ied_escolas, linha_ou_vazia,
                        resumo_html, resumo_texto, grafico_niveis, fmt_pct)
 
@@ -391,6 +391,7 @@ ano_ref = st.selectbox("Ano de referência", anos_disp, index=len(anos_disp)-1)
 linha = df_escola[df_escola["ANO"] == ano_ref].iloc[0]
 media_ird_nac = df_mun[df_mun["ANO"] == ano_ref]["IRD"].mean()
 media_ird_mun = df_mun[(df_mun["ANO"] == ano_ref) & (df_mun["CO_MUNICIPIO"] == co_mun)]["IRD"].mean()
+media_ird_uf  = df_mun[(df_mun["ANO"] == ano_ref) & (df_mun["SG_UF"] == uf_sel)]["IRD"].mean()
 media_atu_nac = df_mun[df_mun["ANO"] == ano_ref]["ATU"].mean()
 ird = linha["IRD"]
 
@@ -470,11 +471,14 @@ with col_ird:
     </div>""", unsafe_allow_html=True)
 
 with col_comp:
-    c1, c2 = st.columns(2)
-    c1.metric("Média nacional", formatar_br(media_ird_nac),
-        delta=f"{ird-media_ird_nac:+.3f}".replace(".",",") if pd.notna(ird) else None)
-    c2.metric(f"Média {mun_sel}", formatar_br(media_ird_mun),
-        delta=f"{ird-media_ird_mun:+.3f}".replace(".",",") if pd.notna(ird) and pd.notna(media_ird_mun) else None)
+    c1, c2, c3 = st.columns(3)
+    c1.metric(f"Média {mun_sel}", formatar_br(media_ird_mun),
+        delta=distancia_media(ird, media_ird_mun))
+    c2.metric(f"Média {uf_sel}", formatar_br(media_ird_uf),
+        delta=distancia_media(ird, media_ird_uf))
+    c3.metric("Média nacional", formatar_br(media_ird_nac),
+        delta=distancia_media(ird, media_ird_nac))
+    st.caption("Abaixo de cada média: quanto esta escola está acima (▲) ou abaixo (▼) dela, em pontos e em %.")
     st.markdown(f"<p style='font-size:0.95rem;color:#333;'>{texto_sit}</p>", unsafe_allow_html=True)
 
 st.markdown(f"**Variação em relação ao ano anterior:** {texto_var}")

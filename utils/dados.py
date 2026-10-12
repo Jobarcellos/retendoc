@@ -529,6 +529,17 @@ def formatar_br(valor, casas=3):
     return f"{float(valor):.{casas}f}".replace(".", ",")
 
 
+def distancia_media(valor, media, casas=3):
+    """Diferença para uma média de referência, em pontos e em %: '+0,070 (+2,7%)'.
+    Usada no delta de st.metric (seta verde acima da média, vermelha abaixo)."""
+    if pd.isna(valor) or pd.isna(media) or not media:
+        return None
+    dif = float(valor) - float(media)
+    pct = dif / float(media) * 100
+    return (f"{dif:+.{casas}f}".replace(".", ",")
+            + f" ({pct:+.1f}%)".replace(".", ","))
+
+
 # ── Tendência histórica (compartilhada por Município e Escola) ────────────────
 def classificar_tendencia(df, ano_ref, janela=5):
     """Classifica a trajetória do IRD até ano_ref.

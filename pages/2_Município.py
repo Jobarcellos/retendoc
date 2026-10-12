@@ -14,7 +14,7 @@ from utils.dados import (carregar_municipal, carregar_escola, formatar_br,
                          render_tendencia, sombrear_pandemia, tabela_pares,
                          municipal_por_rede, REDES_DISPONIVEIS,
                          calcular_anos_em_alerta, rotulo_cronicidade, agora_br,
-                         leitura_ranking, rotulo_faixa_inep, icone_pagina)
+                         leitura_ranking, rotulo_faixa_inep, icone_pagina, distancia_media)
 
 st.set_page_config(page_title="Município · RegDoc", page_icon=icone_pagina(), layout="wide")
 
@@ -237,14 +237,17 @@ with aba1:
 
     with col_comp:
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Média Brasil", formatar_br(media_ird_nac))
-        c2.metric(f"Média {uf_sel}", formatar_br(media_ird_uf))
+        c1.metric(f"Média {uf_sel}", formatar_br(media_ird_uf),
+                  delta=distancia_media(ird, media_ird_uf))
+        c2.metric("Média Brasil", formatar_br(media_ird_nac),
+                  delta=distancia_media(ird, media_ird_nac))
         c3.metric("Alunos por turma", formatar_br(linha_atual["ATU"], 1))
         c4.metric("Formação adequada (%)", formatar_br(linha_atual["AFD"], 1))
         st.markdown(
             f"<p style='font-size:0.9rem; color:#333; margin-top:0.5rem;'>"
             f"{texto_sit}<br><strong>Variação:</strong> {texto_var}</p>",
             unsafe_allow_html=True)
+        st.caption(f"Abaixo de cada média: quanto {municipio_label} está acima (▲) ou abaixo (▼) dela, em pontos e em %.")
 
     if orientacoes:
         with st.expander(f"📋 O que fazer? — Orientações para situação de {situacao}"):
