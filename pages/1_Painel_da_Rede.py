@@ -7,6 +7,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global, sombrear_pandemia, icone_pagina
+from utils.ied import TOOLTIP_IED as _TOOLTIP_IED_INEP, ied_brasil_uf, linha_ou_vazia, resumo_html
 
 st.set_page_config(page_title="Painel da Rede · RegDoc", page_icon=icone_pagina(), layout="wide")
 aplicar_estilo_global()
@@ -54,9 +55,7 @@ TOOLTIP_AFD = (
     "Fonte: Censo Escolar/INEP."
 )
 
-TOOLTIP_IED = (
-    "IED — Indicador de Esforço Docente (Inep). Mede o peso da rotina de trabalho do professor. O Inep classifica cada docente em seis níveis, de 1 (rotina mais leve) a 6 (rotina mais pesada), conforme o número de alunos, escolas, turnos e etapas em que atua. O RegDoc mostra o percentual de docentes do Ensino Fundamental no Nível 1: quanto MAIOR o valor, mais docentes com rotina leve. O indicador oficial do Inep olha para o outro extremo: os docentes de rotina pesada. Não indica duplo vínculo. Fonte: Censo Escolar/Inep, Nota Técnica nº 039/2014."
-)
+TOOLTIP_IED = _TOOLTIP_IED_INEP
 
 def tooltip_html(sigla, tip):
     return (
@@ -96,7 +95,9 @@ m1, m2, m3, m4, m5 = st.columns(5)
 ird_medio = df_filtrado["IRD"].mean()
 atu_medio = df_filtrado["ATU"].mean()
 afd_medio = df_filtrado["AFD"].mean()
-ied_medio = df_filtrado["IED"].mean()
+# Esforço docente: valor publicado pelo Inep para o Brasil ou para o estado escolhido
+_unid_ied = "BR" if not ufs_sel else (ufs_sel[0] if len(ufs_sel) == 1 else None)
+ied_painel = linha_ou_vazia(ied_brasil_uf(_unid_ied, "Todas as redes", (int(ano_sel),))) if _unid_ied else None
 n_mun     = df_filtrado["CO_MUNICIPIO"].nunique()
 
 # Calcular municípios em alerta
@@ -124,10 +125,15 @@ m3.markdown(
     f"{tooltip_html('AFD', TOOLTIP_AFD)}</p></div>",
     unsafe_allow_html=True
 )
+if ied_painel is None:
+    _ied_corpo = "<p style='font-size:0.85rem;color:#555;margin:0.4rem 0;'>Escolha um só estado para ver este indicador.</p>"
+elif ied_painel.empty:
+    _ied_corpo = "<p style='font-size:1.8rem;font-weight:bold;color:#1a3a5c;margin:0;'>—</p>"
+else:
+    _ied_corpo = f"<div style='font-size:0.85rem;color:#333;line-height:1.6;text-align:left;'>{resumo_html(ied_painel)}</div>"
 m4.markdown(
-    f"<div style='text-align:center;'>"
-    f"<p style='font-size:1.8rem;font-weight:bold;color:#1a3a5c;margin:0;'>{formatar_br(ied_medio,1)}%</p>"
-    f"<p style='font-size:0.8rem;color:#777;margin:0;'>Docentes de menor esforço "
+    f"<div style='text-align:center;'>{_ied_corpo}"
+    f"<p style='font-size:0.8rem;color:#777;margin:0;'>Docentes com esforço elevado "
     f"{tooltip_html('IED', TOOLTIP_IED)}</p></div>",
     unsafe_allow_html=True
 )

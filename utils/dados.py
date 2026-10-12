@@ -683,7 +683,8 @@ def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
         return d[col].mean() if col in d.columns and d[col].notna().any() else float("nan")
 
     icg_m, atu_m = _media("ICG"), _media("ATU")
-    afd_m, ied_m = _media("AFD"), _media("IED")
+    afd_m = _media("AFD")
+    elev_m = {e: _media(f"ELEV_{e}") for e in ("AI", "AF", "EM")}
 
     acima = pd.notna(ird_mun) and pd.notna(media_nac) and ird_mun >= media_nac
     comp_nac = "acima" if acima else "abaixo"
@@ -748,9 +749,9 @@ def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
         "apoio estrutural, a segunda costuma responder a ajustes de gestão. "
         "<b>Alunos por turma</b> indica a carga de sala. "
         "<b>Formação (%)</b> é a proporção de professores com formação adequada à disciplina "
-        "que lecionam. <b>Menor esforço docente (%)</b> é a proporção de professores no nível mais baixo de esforço do Inep "
-        "(uma escola, um turno, uma etapa e poucos alunos). Quanto mais baixo, mais professores "
-        "atuam em mais de um turno, escola ou etapa, ou com mais alunos."
+        "que lecionam. <b>Esforço elevado (%)</b> é a proporção de professores com rotina pesada, "
+        "segundo o Inep (muitos alunos, turnos, escolas ou etapas), separada por etapa. "
+        "Quanto mais alto, mais professores com jornada fragmentada."
     )
 
     ctx = []
@@ -760,8 +761,11 @@ def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
         ctx.append(f"{formatar_br(atu_m, 1)} alunos por turma")
     if pd.notna(afd_m):
         ctx.append(f"{formatar_br(afd_m, 1)}% de formação adequada")
-    if pd.notna(ied_m):
-        ctx.append(f"{formatar_br(ied_m, 1)}% de docentes de menor esforço")
+    for _e, _nome in (("AI", "anos iniciais"), ("AF", "anos finais"), ("EM", "ensino médio")):
+        if pd.notna(elev_m[_e]):
+            ctx.append(f"{formatar_br(elev_m[_e], 1)}% de docentes com esforço elevado nos {_nome}"
+                       if _e != "EM" else
+                       f"{formatar_br(elev_m[_e], 1)}% de docentes com esforço elevado no {_nome}")
     if ctx and total >= 2:
         p3 += f" Na média deste recorte: {', '.join(ctx)}."
 
@@ -773,7 +777,9 @@ def leitura_ranking(df_rank, ird_mun, media_nac, municipio, ano):
         fv = d[d["RISCO"] == "Favorável"]
         pistas = []
         for col, rotulo, casas, sufixo in [
-            ("IED", "proporção de docentes de menor esforço", 1, "%"),
+            ("ELEV_AI", "esforço docente elevado nos anos iniciais", 1, "%"),
+            ("ELEV_AF", "esforço docente elevado nos anos finais", 1, "%"),
+            ("ELEV_EM", "esforço docente elevado no ensino médio", 1, "%"),
             ("ICG", "complexidade", 2, ""),
             ("ATU", "alunos por turma", 1, ""),
             ("AFD", "formação adequada", 1, "%"),

@@ -6,6 +6,9 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from datetime import datetime
+from utils.ied import (TOOLTIP_IED, ETAPAS, COLS_ELEVADO, ied_municipios, ied_brasil_uf,
+                       ied_escolas_municipio, linha_ou_vazia, resumo_html,
+                       resumo_texto, grafico_niveis, colunas_elevado_formatadas, fmt_pct)
 from utils.dados import (carregar_municipal, carregar_escola, formatar_br,
                          aplicar_estilo_global, classificar_tendencia,
                          render_tendencia, sombrear_pandemia, tabela_pares,
@@ -80,9 +83,7 @@ TOOLTIPS = {
         "Quanto maior, mais qualificado e alinhado é o quadro docente do município. "
         "Fonte: Censo Escolar/INEP."
     ),
-    "IED": (
-        "IED — Indicador de Esforço Docente (Inep). Mede o peso da rotina de trabalho do professor. O Inep classifica cada docente em seis níveis, de 1 (rotina mais leve) a 6 (rotina mais pesada), conforme o número de alunos, escolas, turnos e etapas em que atua. O RegDoc mostra o percentual de docentes do Ensino Fundamental no Nível 1: quanto MAIOR o valor, mais docentes com rotina leve. O indicador oficial do Inep olha para o outro extremo: os docentes de rotina pesada. Não indica duplo vínculo. Fonte: Censo Escolar/Inep, Nota Técnica nº 039/2014."
-    ),
+    "IED": TOOLTIP_IED,
     "ICG": (
         "ICG — Indicador de Complexidade de Gestão da Escola. "
         "Média da complexidade das escolas do município, combinando: "
@@ -140,6 +141,11 @@ ano_ref = st.selectbox("Ano de referência", sorted(df_mun["ANO"].unique()),
                        index=len(df_mun["ANO"].unique()) - 1)
 
 _sel_ano = df_mun[df_mun["ANO"] == ano_ref]
+
+# IED: seis níveis publicados pelo Inep para o município, na rede escolhida
+ied_mun_hist = ied_municipios((str(co_mun),), rede_sel)
+ied_mun = linha_ou_vazia(ied_mun_hist[ied_mun_hist["ANO"] == ano_ref]
+                         if not ied_mun_hist.empty else ied_mun_hist)
 if _sel_ano.empty:
     st.warning(f"Sem dados da rede selecionada para {municipio_label} em {ano_ref}.")
     st.stop()
@@ -264,11 +270,11 @@ with aba1:
         st.markdown(f"""
         <div style="border:1px solid #dde4ed; border-radius:8px; padding:1rem 1.2rem; background:#f7f9fc;">
             <div style="font-size:0.9rem; font-weight:600; color:#1a3a5c; margin-bottom:4px;">
-                Docentes de menor esforço (IED)
+                Esforço docente elevado (IED)
                 <span class="tooltip-wrap"><span class="info-icon">i</span>
                 <span class="tip">{TOOLTIPS['IED']}</span></span>
             </div>
-            <div style="font-size:1.6rem; font-weight:bold; color:#1a3a5c;">{formatar_br(linha_atual['IED'],1)}%</div>
+            <div style="font-size:0.95rem; color:#333; line-height:1.7;">{resumo_html(ied_mun) if not ied_mun.empty else "—"}</div>
         </div>""", unsafe_allow_html=True)
     with ci3:
         st.markdown(f"""
@@ -280,6 +286,14 @@ with aba1:
             </div>
             <div style="font-size:1.6rem; font-weight:bold; color:#1a3a5c;">{formatar_br(linha_atual['ICG'],1)}</div>
         </div>""", unsafe_allow_html=True)
+
+    _fig_ied_mun = grafico_niveis(ied_mun) if not ied_mun.empty else None
+    if _fig_ied_mun is not None:
+        with st.expander("📊 Ver os seis níveis de esforço docente (Inep)"):
+            st.caption(f"Percentual de professores do município em cada nível, por etapa — "
+                       f"{ano_ref}, {'todas as redes' if rede_sel == 'Todas as redes' else 'rede ' + rede_sel.lower()}. "
+                       "Nível 1 = rotina mais leve; nível 6 = rotina mais pesada.")
+            st.plotly_chart(_fig_ied_mun, use_container_width=True)
 
     st.markdown("---")
     st.markdown("### Como seu município está entre os parecidos com ele?")
@@ -491,9 +505,12 @@ with aba1:
     render_tendencia(tendencia)
 
     st.markdown("### Série histórica completa")
-    df_tab = df_mun[["ANO","IRD","ATU","AFD","IED","ICG"]].copy()
+    df_tab = df_mun[["ANO","IRD","ATU","AFD","ICG"]].copy()
+    if not ied_mun_hist.empty:
+        df_tab = df_tab.merge(ied_mun_hist[["ANO"] + [c for c in COLS_ELEVADO if c in ied_mun_hist.columns]],
+                              on="ANO", how="left")
     df_tab = df_tab.rename(columns={"ANO":"Ano","IRD":"Regularidade (0-5)",
-        "ATU":"Alunos/turma","AFD":"Formação (%)","IED":"Menor esforço (%)","ICG":"Complexidade"})
+        "ATU":"Alunos/turma","AFD":"Formação (%)","ICG":"Complexidade", **COLS_ELEVADO})
     for col in df_tab.columns[1:]:
         df_tab[col] = df_tab[col].apply(lambda x: formatar_br(x, 1))
     st.dataframe(df_tab.set_index("Ano"), use_container_width=True)
@@ -502,14 +519,17 @@ with aba1:
 
     def gerar_relatorio_municipio():
         rows = ""
-        df_h = df_mun[["ANO","IRD","ATU","AFD","IED","ICG"]].copy()
+        df_h = df_mun[["ANO","IRD","ATU","AFD","ICG"]].copy()
+        if not ied_mun_hist.empty:
+            df_h = df_h.merge(ied_mun_hist[["ANO"] + [c for c in COLS_ELEVADO if c in ied_mun_hist.columns]],
+                              on="ANO", how="left")
         df_h["VAR"] = df_h["IRD"].diff()
         for _, r in df_h.iterrows():
             var     = formatar_br(r["VAR"]) if pd.notna(r["VAR"]) else "—"
             cor_var = "#27ae60" if pd.notna(r["VAR"]) and r["VAR"] > 0 else "#c0392b" if pd.notna(r["VAR"]) and r["VAR"] < 0 else "#333"
             rows += (f"<tr><td>{int(r['ANO'])}</td><td>{formatar_br(r['IRD'])}</td>"
                      f"<td style='color:{cor_var}'>{var}</td><td>{formatar_br(r['ATU'],1)}</td>"
-                     f"<td>{formatar_br(r['AFD'],1)}%</td><td>{formatar_br(r['IED'],1)}%</td>"
+                     f"<td>{formatar_br(r['AFD'],1)}%</td><td>{resumo_texto(r)}</td>"
                      f"<td>{formatar_br(r['ICG'],1)}</td></tr>")
         ori_html = "".join([
             f"<div style='display:flex;gap:12px;align-items:flex-start;margin-bottom:8px;'>"
@@ -581,7 +601,7 @@ with aba1:
 {tend_html}
 <div class="section"><h2>Série histórica completa</h2>
   <table><thead><tr><th>Ano</th><th>Regularidade</th><th>Variação</th>
-  <th>Alunos/turma</th><th>Formação (%)</th><th>Menor esforço (%)</th><th>Complexidade</th></tr></thead>
+  <th>Alunos/turma</th><th>Formação (%)</th><th>Esforço docente elevado</th><th>Complexidade</th></tr></thead>
   <tbody>{rows}</tbody></table>
 </div>
 <div class="section"><h2>O que fazer — situação de {situacao}</h2>
@@ -704,7 +724,6 @@ with aba1:
             ("IRD", "Regularidade docente (0–5)", 3),
             ("ICG", "Complexidade da gestão (1–6)", 2),
             ("AFD", "Formação adequada (%)", 1),
-            ("IED", "Menor esforço docente (%)", 1),
             ("ATU", "Alunos por turma", 1),
         ]
         ind_rows = ""
@@ -717,12 +736,23 @@ with aba1:
                     f"<td style='text-align:center'><strong>{formatar_br(v_loc, casas)}</strong></td>"
                     f"<td style='text-align:center'>{formatar_br(v_nac, casas)}</td></tr>"
                 )
+        # Esforço docente: valores publicados pelo Inep (município × Brasil, mesma rede)
+        _ied_br = linha_ou_vazia(ied_brasil_uf("BR", rede_sel, (int(ano_ref),)))
+        for _e, _nome in ETAPAS.items():
+            _vl = ied_mun.get(f"ELEV_{_e}") if not ied_mun.empty else None
+            if _vl is not None and pd.notna(_vl):
+                _vn = _ied_br.get(f"ELEV_{_e}") if not _ied_br.empty else None
+                ind_rows += (
+                    f"<tr><td>Esforço docente elevado: {_nome.lower()} (%)</td>"
+                    f"<td style='text-align:center'><strong>{formatar_br(_vl, 1)}</strong></td>"
+                    f"<td style='text-align:center'>{formatar_br(_vn, 1) if _vn is not None and pd.notna(_vn) else '—'}</td></tr>"
+                )
         ind_section = (f"""
 <div class="section"><h2>Indicadores da rede em {ano_ref}</h2>
 <table><thead><tr><th>Indicador</th><th style="text-align:center">Sua rede</th>
 <th style="text-align:center">Brasil (mesma rede)</th></tr></thead>
 <tbody>{ind_rows}</tbody></table>
-<p class="nota">Médias das escolas do recorte. Complexidade e alunos por turma são contexto,
+<p class="nota">Médias das escolas do recorte; esforço docente elevado: valores publicados pelo Inep. Complexidade e alunos por turma são contexto,
 não nota: valores altos explicam a dificuldade, não condenam a gestão.</p></div>""" if ind_rows else "")
 
         # Onde a irregularidade se concentra: tabela por segmento
@@ -1027,6 +1057,12 @@ with aba2:
         st.info("Nenhuma escola encontrada com os filtros selecionados.")
     else:
         df_esc_rank = df_esc_mun.dropna(subset=["IRD"]).copy()
+        _ied_esc_mun = ied_escolas_municipio(str(co_mun), int(ano_ref))
+        if not _ied_esc_mun.empty:
+            df_esc_rank = df_esc_rank.merge(
+                _ied_esc_mun[["CO_ENTIDADE"] + [c for c in COLS_ELEVADO if c in _ied_esc_mun.columns]
+                             + [c for c in _ied_esc_mun.columns if c.startswith("IED_")]],
+                on="CO_ENTIDADE", how="left")
         n_sd = len(df_esc_mun) - len(df_esc_rank)
 
         CORES_ESC = {"Alerta":"#c0392b","Atenção":"#e67e22","Favorável":"#27ae60"}
@@ -1147,7 +1183,8 @@ with aba2:
         cols_base  = ["NO_ENTIDADE","IRD","RISCO"]
         if tem_dep:
             cols_base.append("NO_DEPENDENCIA")
-        cols_extra = [c for c in ["ICG","ATU","AFD","IED"] if c in df_esc_rank.columns]
+        cols_extra = [c for c in ["ICG","ATU","AFD"] + list(COLS_ELEVADO) if c in df_esc_rank.columns
+                      and (c not in COLS_ELEVADO or df_esc_rank[c].notna().any())]
 
         df_tab_esc = df_esc_rank[cols_base + cols_extra].copy()
         # Régua oficial do Inep, ao lado da régua relativa da rede (ver dados.py)
@@ -1155,7 +1192,7 @@ with aba2:
             df_tab_esc.columns.get_loc("RISCO"), "FAIXA_INEP",
             df_esc_rank["IRD"].apply(rotulo_faixa_inep)
         )
-        fmt_esc = {"IRD":3,"ICG":2,"ATU":1,"AFD":1,"IED":1}
+        fmt_esc = {"IRD":3,"ICG":2,"ATU":1,"AFD":1, **{c: 1 for c in COLS_ELEVADO}}
         for col, dec in fmt_esc.items():
             if col in df_tab_esc.columns:
                 df_tab_esc[col] = df_tab_esc[col].apply(
@@ -1170,7 +1207,7 @@ with aba2:
             "ICG":            "Complexidade",
             "ATU":            "Alunos/turma",
             "AFD":            "Formação (%)",
-            "IED":            "Menor esforço docente (%)",
+            **COLS_ELEVADO,
         })
         df_tab_esc.index = df_tab_esc.index + 1
         df_tab_esc.index.name = "Posição"
@@ -1298,7 +1335,7 @@ with aba2:
                         icg_esc  = r.get("ICG")
                         atu_esc  = r.get("ATU")
                         afd_esc  = r.get("AFD")
-                        ied_esc  = r.get("IED")
+                        ied_esc  = resumo_texto(r)
                         dep_esc  = r.get("NO_DEPENDENCIA", "—") if tem_dep else "—"
 
                         html_individual = f"""<!DOCTYPE html>
@@ -1330,7 +1367,7 @@ with aba2:
   <tr><td>Complexidade (ICG)</td><td>{formatar_br(icg_esc, 2) if pd.notna(icg_esc) else "—"}</td></tr>
   <tr><td>Alunos/turma (ATU)</td><td>{formatar_br(atu_esc, 1) if pd.notna(atu_esc) else "—"}</td></tr>
   <tr><td>Formação adequada (AFD)</td><td>{formatar_br(afd_esc, 1) if pd.notna(afd_esc) else "—"}%</td></tr>
-  <tr><td>Docentes de menor esforço (IED)</td><td>{formatar_br(ied_esc, 1) if pd.notna(ied_esc) else "—"}%</td></tr>
+  <tr><td>Esforço docente elevado (IED)</td><td>{ied_esc}</td></tr>
 </table>
 <p style='font-size:11px;color:#aaa;margin-top:1.5rem;'>
   RegDoc · Censo Escolar/INEP · retendoc.streamlit.app<br>
