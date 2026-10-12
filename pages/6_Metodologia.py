@@ -146,12 +146,13 @@ Escolas sem ATU publicado pelo Inep aparecem sem valor.
   por faixa). O RegDoc usa a **média simples do IRD das escolas** do município.
 - **ICG:** o Inep publica o percentual de escolas por nível de complexidade. O RegDoc
   usa o **nível médio**, ponderado por esse percentual.
-- **IED:** o Inep classifica cada docente em seis níveis de esforço, de 1 (menor) a 6
-  (maior), combinando escolas, turnos, etapas e alunos atendidos. O RegDoc mostra o
-  percentual de docentes no **Nível 1**, o de menor esforço: quanto maior o percentual,
-  menos docentes de esforço elevado.
-  O indicador oficial do Inep destaca, ao contrário, os docentes de esforço elevado
-  (Níveis 5 e 6 nos anos iniciais; Nível 6 nos anos finais e no ensino médio).
+- **IED (esforço docente):** mede o peso da rotina de trabalho do professor. O Inep
+  classifica cada docente em seis níveis, de 1 (rotina mais leve) a 6 (rotina mais
+  pesada), conforme o número de alunos, escolas, turnos e etapas em que atua. O RegDoc
+  mostra o percentual de professores do Ensino Fundamental no **Nível 1**. Quanto maior
+  esse percentual, mais professores do município têm rotina leve. O indicador oficial do
+  Inep olha para o outro extremo: o percentual de professores com rotina pesada (Níveis 5
+  e 6 nos anos iniciais; Nível 6 nos anos finais e no ensino médio).
   Fonte: Nota Técnica Inep nº 039/2014.
 
 **O que isso significa para você:** a média simples do IRD dá o mesmo peso a uma escola

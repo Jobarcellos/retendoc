@@ -33,7 +33,7 @@ TOOLTIPS = {
     "IRD": "O IRD mede se os mesmos professores continuam na escola de um ano para o outro. Escala de 0 a 5 — quanto maior, mais estável é o corpo docente. Fonte: Nota Técnica INEP nº 11/2015.",
     "ATU": "ATU — Média de Alunos por Turma. Turmas maiores aumentam a sobrecarga docente e estão associadas a maior rotatividade. Fonte: Censo Escolar/INEP.",
     "AFD": "AFD — Adequação da Formação Docente. Percentual de professores que lecionam na área em que se formaram. Quanto maior, melhor. Fonte: Censo Escolar/INEP.",
-    "IED": "IED — Indicador de Esforço Docente (Inep). O Inep classifica cada docente em seis níveis de esforço, de 1 (menor) a 6 (maior), combinando escolas, turnos, etapas e alunos atendidos. O RegDoc mostra o percentual de docentes no Nível 1, o de menor esforço: quanto MAIOR o valor, MENOS docentes com jornada fragmentada ou com muitos alunos. Não é o indicador oficial do Inep, que destaca os docentes de esforço elevado. Não indica duplo vínculo. Fonte: Censo Escolar/Inep, Nota Técnica nº 039/2014.",
+    "IED": "IED — Indicador de Esforço Docente (Inep). Mede o peso da rotina de trabalho do professor. O Inep classifica cada docente em seis níveis, de 1 (rotina mais leve) a 6 (rotina mais pesada), conforme o número de alunos, escolas, turnos e etapas em que atua. O RegDoc mostra o percentual de docentes do Ensino Fundamental no Nível 1: quanto MAIOR o valor, mais docentes com rotina leve. O indicador oficial do Inep olha para o outro extremo: os docentes de rotina pesada. Não indica duplo vínculo. Fonte: Censo Escolar/Inep, Nota Técnica nº 039/2014.",
     "ICG": "ICG — Complexidade de Gestão da Escola. Combina porte, turnos, etapas e modalidades. Escala de 1 a 6. Fonte: Censo Escolar/INEP.",
 }
 
