@@ -344,7 +344,7 @@ df_mun = carregar_municipal()
 
 busca = st.text_input("🔎 Busque pelo nome da escola (mínimo 3 letras)", placeholder="Ex: Maria, EMEF, CMEI...")
 
-col1, col2, col3 = st.columns([1, 2, 3])
+col1, col2, col_rede, col3 = st.columns([1, 2, 1.3, 3])
 with col1:
     ufs = sorted(df_esc["SG_UF"].dropna().unique())
     uf_sel = st.selectbox("Estado", ufs, index=ufs.index("ES") if "ES" in ufs else 0)
@@ -355,17 +355,36 @@ with col2:
 
 co_mun = municipios[municipios["NO_MUNICIPIO"] == mun_sel]["CO_MUNICIPIO"].iloc[0]
 
+# Rede de cada escola: a dependência administrativa do ano mais recente da série
+# (escolas municipalizadas aparecem na rede atual).
+_esc_mun_all = df_esc[df_esc["CO_MUNICIPIO"] == co_mun]
+_rede_atual = (_esc_mun_all.dropna(subset=["NO_DEPENDENCIA"])
+               .sort_values("ANO")
+               .drop_duplicates("CO_ENTIDADE", keep="last")
+               .set_index("CO_ENTIDADE")["NO_DEPENDENCIA"].astype(str))
+with col_rede:
+    _ordem_redes = ["Municipal", "Estadual", "Privada", "Federal"]
+    _redes_mun = [r for r in _ordem_redes if r in set(_rede_atual)] + \
+                 sorted(set(_rede_atual) - set(_ordem_redes))
+    rede_esc = st.selectbox("Rede", ["Todas as redes"] + _redes_mun,
+                            help="Mostra na lista só as escolas da rede escolhida.")
+
 with col3:
     # Uma linha por escola (código INEP): o nome já é canônico (o mais recente da
     # série), então escolas renomeadas ou municipalizadas não aparecem duplicadas.
-    df_escolas_mun = (df_esc[df_esc["CO_MUNICIPIO"] == co_mun]
+    df_escolas_mun = (_esc_mun_all
                       [["CO_ENTIDADE", "NO_ENTIDADE"]]
                       .drop_duplicates("CO_ENTIDADE"))
+    if rede_esc != "Todas as redes":
+        df_escolas_mun = df_escolas_mun[
+            df_escolas_mun["CO_ENTIDADE"].map(_rede_atual) == rede_esc]
     if busca and len(busca) >= 3:
         df_escolas_mun = df_escolas_mun[df_escolas_mun["NO_ENTIDADE"].str.upper().str.contains(busca.upper(), na=False)]
     df_escolas_mun = df_escolas_mun.sort_values("NO_ENTIDADE")
     if df_escolas_mun.empty:
-        st.warning("Nenhuma escola encontrada com esse nome neste município.")
+        st.warning("Nenhuma escola encontrada com esse nome nesta rede e município."
+                   if rede_esc != "Todas as redes"
+                   else "Nenhuma escola encontrada com esse nome neste município.")
         st.stop()
     # A seleção é feita pelo código INEP, não pelo nome: escolas homônimas (mesmo
     # nome, códigos distintos) recebem o código no rótulo, e a página nunca abre
