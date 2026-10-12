@@ -310,6 +310,11 @@ def carregar_municipal():
     df = pd.read_parquet("municipal_consolidado.parquet")
     df["CO_MUNICIPIO"] = df["CO_MUNICIPIO"].astype(str).str.replace(r"\.0$", "", regex=True)
     df["ANO"] = df["ANO"].astype(int)
+    # Município instalado em 2025 que veio sem nome e UF na base municipal
+    # (no Inep e na base de escolas: Boa Esperança do Norte, MT).
+    _novo = df["CO_MUNICIPIO"] == "5101837"
+    df.loc[_novo & df["SG_UF"].isna(), "SG_UF"] = "MT"
+    df.loc[_novo & df["NO_MUNICIPIO"].isna(), "NO_MUNICIPIO"] = "Boa Esperança do Norte"
     df["NO_MUNICIPIO"] = df["NO_MUNICIPIO"].fillna("Não identificado")
     df["SG_UF"] = df["SG_UF"].fillna("??")
     return df
