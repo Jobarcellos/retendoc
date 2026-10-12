@@ -155,7 +155,16 @@ df_tabela = df_tabela.rename(columns={
     "ATU":"Alunos/turma",
     "AFD":"Formação (%)","ICG":"Complexidade","RISCO":"Situação", **COLS_ELEVADO
 })
-st.dataframe(df_tabela, use_container_width=True, hide_index=True)
+# Coluna "Situação" com as cores do semáforo (mesmas da tela Município)
+COR_SITUACAO = {
+    "Alerta":    "background-color: #fde8e8; color: #c0392b; font-weight: 600;",
+    "Atenção":   "background-color: #fef3e2; color: #e67e22; font-weight: 600;",
+    "Moderado":  "background-color: #fef9e7; color: #9a7d0a; font-weight: 600;",
+    "Favorável": "background-color: #e8f8f0; color: #27ae60; font-weight: 600;",
+    "Sem dados": "background-color: #f5f5f5; color: #aaa;",
+}
+st.dataframe(df_tabela.style.map(lambda v: COR_SITUACAO.get(v, ""), subset=["Situação"]),
+             use_container_width=True, hide_index=True)
 
 col_dl1, col_dl2 = st.columns([1, 3])
 with col_dl1:
