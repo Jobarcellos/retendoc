@@ -140,7 +140,7 @@ Escolas sem ATU publicado pelo Inep aparecem sem valor.
 
 **Municípios:** a base reúne **todas as redes** (federal, estadual, municipal e privada).
 
-- **AFD, IED e ATU:** são os valores municipais **publicados pelo Inep** (linha "Total"
+- **AFD e ATU:** são os valores municipais **publicados pelo Inep** (linha "Total"
   de localização e dependência administrativa), sem recálculo.
 - **IRD:** o Inep não publica um valor único por município (só o percentual de escolas
   por faixa). O RegDoc usa a **média simples do IRD das escolas** do município.
@@ -148,11 +148,13 @@ Escolas sem ATU publicado pelo Inep aparecem sem valor.
   usa o **nível médio**, ponderado por esse percentual.
 - **IED (esforço docente):** mede o peso da rotina de trabalho do professor. O Inep
   classifica cada docente em seis níveis, de 1 (rotina mais leve) a 6 (rotina mais
-  pesada), conforme o número de alunos, escolas, turnos e etapas em que atua. O RegDoc
-  mostra o percentual de professores do Ensino Fundamental no **Nível 1**. Quanto maior
-  esse percentual, mais professores do município têm rotina leve. O indicador oficial do
-  Inep olha para o outro extremo: o percentual de professores com rotina pesada (Níveis 5
-  e 6 nos anos iniciais; Nível 6 nos anos finais e no ensino médio).
+  pesada), conforme o número de alunos, escolas, turnos e etapas em que atua, e publica
+  o percentual de docentes em cada nível, por etapa (anos iniciais, anos finais e ensino
+  médio), para escolas, municípios, estados e Brasil. O RegDoc mostra esses valores sem
+  recálculo: a distribuição nos seis níveis e o percentual de professores com **esforço
+  elevado**, o destaque do Inep (níveis 5 e 6 nos anos iniciais; nível 6 nos anos finais
+  e no ensino médio). Quanto maior esse percentual, mais professores com rotina pesada.
+  Ao escolher uma rede, o valor do município é o publicado pelo Inep para essa rede.
   Fonte: Nota Técnica Inep nº 039/2014.
 
 **O que isso significa para você:** a média simples do IRD dá o mesmo peso a uma escola

@@ -10,6 +10,8 @@ from utils.dados import (carregar_escola, carregar_municipal, formatar_br,
                          aplicar_estilo_global, classificar_tendencia,
                          render_tendencia, sombrear_pandemia, agora_br,
                          faixa_inep, icone_pagina)
+from utils.ied import (TOOLTIP_IED, ETAPAS, ied_escolas, linha_ou_vazia,
+                       resumo_html, resumo_texto, grafico_niveis, fmt_pct)
 
 st.set_page_config(page_title="Escola · RegDoc", page_icon=icone_pagina(), layout="wide")
 
@@ -82,9 +84,7 @@ TOOLTIPS = {
         "erros de preenchimento afetam o indicador. "
         "Fonte: Censo Escolar/INEP."
     ),
-    "IED": (
-        "IED — Indicador de Esforço Docente (Inep). Mede o peso da rotina de trabalho do professor. O Inep classifica cada docente em seis níveis, de 1 (rotina mais leve) a 6 (rotina mais pesada), conforme o número de alunos, escolas, turnos e etapas em que atua. O RegDoc mostra o percentual de docentes do Ensino Fundamental no Nível 1: quanto MAIOR o valor, mais docentes com rotina leve. O indicador oficial do Inep olha para o outro extremo: os docentes de rotina pesada. Não indica duplo vínculo. Fonte: Censo Escolar/Inep, Nota Técnica nº 039/2014."
-    ),
+    "IED": TOOLTIP_IED,
     "ICG": (
         "ICG — Indicador de Complexidade de Gestão da Escola. "
         "Mede o grau de desafio que a escola impõe ao seu gestor, combinando: "
@@ -159,7 +159,7 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "Fortaleça o projeto pedagógico como âncora de pertencimento. Em contextos "
                 "rurais, o vínculo do professor com a comunidade pode contribuir para a "
                 "permanência quando as condições materiais são limitadas.",
-                "Monitore o percentual de docentes de menor esforço (IED). Queda nesse percentual "
+                "Monitore o percentual de docentes com esforço elevado (IED). Alta nesse percentual "
                 "pode indicar jornada mais fragmentada entre escolas rurais distintas, "
                 "vínculo mais fraco com cada unidade e saída mais provável.",
             ]
@@ -277,7 +277,7 @@ def gerar_prescricao_por_perfil(ird_faixa, icg, localizacao):
                 "Não reduza o esforço de gestão. Escolas bem-sucedidas frequentemente "
                 "revertem ganhos após atingir bons resultados — a estabilidade "
                 "exige manutenção ativa.",
-                "Monitore o percentual de docentes de menor esforço (IED). Alta complexidade urbana com IRD alto "
+                "Monitore o percentual de docentes com esforço elevado (IED). Alta complexidade urbana com IRD alto "
                 "pode mudar rapidamente se a secretaria redistribuir professores experientes "
                 "para outras unidades ou aumentar a carga de trabalho.",
             ]
@@ -396,7 +396,9 @@ ird = linha["IRD"]
 
 atu = linha.get("ATU")
 afd = linha.get("AFD")
-ied = linha.get("IED")
+# IED: seis níveis publicados pelo Inep, por etapa (lidos sob demanda)
+ied_hist = ied_escolas((str(co_esc),))
+ied_linha = linha_ou_vazia(ied_hist[ied_hist["ANO"] == ano_ref] if not ied_hist.empty else ied_hist)
 icg = linha.get("ICG")
 localizacao = linha.get("TP_LOCALIZACAO", linha.get("NO_LOCALIZACAO", "1"))
 
@@ -542,7 +544,7 @@ if len(anos_disp) >= 2:
             st.markdown("**Evolução dos indicadores associados:**")
 
             inds = []
-            for sigla, nome in [("ATU","Alunos/turma"),("AFD","Formação (%)"),("IED","Menor esforço docente (%)"),("ICG","Complexidade")]:
+            for sigla, nome in [("ATU","Alunos/turma"),("AFD","Formação (%)"),("ICG","Complexidade")]:
                 if sigla in df_escola.columns:
                     v_ref  = linha.get(sigla)
                     v_comp = linha_comp.get(sigla)
@@ -553,6 +555,20 @@ if len(anos_disp) >= 2:
                             str(ano_comp): formatar_br(v_comp, 1),
                             str(ano_ref):  formatar_br(v_ref, 1),
                             "Variação": f"+{formatar_br(diff_i,1)}" if diff_i > 0 else formatar_br(diff_i,1)
+                        })
+
+            if not ied_hist.empty:
+                _ied_ref  = linha_ou_vazia(ied_hist[ied_hist["ANO"] == ano_ref])
+                _ied_comp = linha_ou_vazia(ied_hist[ied_hist["ANO"] == ano_comp])
+                for _e, _nome in ETAPAS.items():
+                    _vr, _vc = _ied_ref.get(f"ELEV_{_e}"), _ied_comp.get(f"ELEV_{_e}")
+                    if pd.notna(_vr) and pd.notna(_vc):
+                        _d = _vr - _vc
+                        inds.append({
+                            "Indicador": f"Esforço elevado: {_nome.lower()} (%)",
+                            str(ano_comp): formatar_br(_vc, 1),
+                            str(ano_ref):  formatar_br(_vr, 1),
+                            "Variação": f"+{formatar_br(_d,1)}" if _d > 0 else formatar_br(_d,1)
                         })
 
             if inds:
@@ -596,15 +612,14 @@ with col1:
     card_com_tooltip("Formação adequada", "AFD", formatar_br(afd,1) + ("%" if pd.notna(afd) else ""), afd_i)
 
 with col2:
-    ied_i = (
-        "Nenhum docente da escola está no Nível 1, o de menor esforço: todos atuam nos Níveis 2 a 6 "
-        "(mais de um turno, escola ou etapa, ou mais alunos)."
-        if pd.notna(ied) and ied == 0
-        else f"{formatar_br(ied,1)}% dos docentes estão no Nível 1, o de menor esforço. "
-             "Os demais estão nos Níveis 2 a 6."
-        if pd.notna(ied) else "Não disponível."
-    )
-    card_com_tooltip("Docentes de menor esforço — IED", "IED", formatar_br(ied,1) + ("%" if pd.notna(ied) else ""), ied_i)
+    if ied_linha.empty or not any(pd.notna(ied_linha.get(f"ELEV_{e}")) for e in ETAPAS):
+        card_com_tooltip("Esforço docente elevado — IED", "IED", "—", "Não disponível.")
+    else:
+        card_com_tooltip(
+            "Esforço docente elevado — IED", "IED",
+            f"<div style='font-size:1rem;font-weight:normal;line-height:1.7;'>{resumo_html(ied_linha)}</div>",
+            "Percentual de professores com rotina pesada, por etapa. Quanto maior, "
+            "mais professores com muitos alunos, turnos, escolas ou etapas.")
 
     icg_i = (
         "Escola de alta complexidade — oferece muitos turnos, etapas ou modalidades."
@@ -615,6 +630,13 @@ with col2:
         if pd.notna(icg) else "Não disponível."
     )
     card_com_tooltip("Complexidade da escola — ICG", "ICG", formatar_br(icg,1), icg_i)
+
+_fig_ied = grafico_niveis(ied_linha) if not ied_linha.empty else None
+if _fig_ied is not None:
+    with st.expander("📊 Ver os seis níveis de esforço docente (Inep)"):
+        st.caption(f"Percentual de professores da escola em cada nível, por etapa — {ano_ref}. "
+                   "Nível 1 = rotina mais leve; nível 6 = rotina mais pesada.")
+        st.plotly_chart(_fig_ied, use_container_width=True)
 
 # ── Gráfico + tendência ────────────────────────────────────────────────────────
 st.markdown("---")
@@ -703,9 +725,9 @@ def gerar_relatorio_escola():
         <tr><td style="padding:7px 8px;border-bottom:1px solid #eee;">Formação adequada (AFD)</td>
             <td style="padding:7px 8px;border-bottom:1px solid #eee;">% de professores na área de formação</td>
             <td style="padding:7px 8px;border-bottom:1px solid #eee;">{formatar_br(afd,1)}%</td></tr>
-        <tr><td style="padding:7px 8px;border-bottom:1px solid #eee;">Docentes de menor esforço (IED)</td>
-            <td style="padding:7px 8px;border-bottom:1px solid #eee;">% de docentes no Nível 1 (menor esforço) do Inep</td>
-            <td style="padding:7px 8px;border-bottom:1px solid #eee;">{formatar_br(ied,1)}%</td></tr>
+        <tr><td style="padding:7px 8px;border-bottom:1px solid #eee;">Esforço docente elevado (IED)</td>
+            <td style="padding:7px 8px;border-bottom:1px solid #eee;">% de professores com rotina pesada (Inep), por etapa</td>
+            <td style="padding:7px 8px;border-bottom:1px solid #eee;">{resumo_texto(ied_linha) if not ied_linha.empty else "—"}</td></tr>
         <tr><td style="padding:7px 8px;">Complexidade da escola (ICG)</td>
             <td style="padding:7px 8px;">Porte, turnos, etapas e modalidades (1–6)</td>
             <td style="padding:7px 8px;">{formatar_br(icg,1)}</td></tr>

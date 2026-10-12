@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from utils.dados import carregar_municipal, formatar_br, aplicar_estilo_global, classificar_risco, calcular_anos_em_alerta, rotulo_cronicidade, icone_pagina
+from utils.ied import COLS_ELEVADO, ied_municipios
 
 st.set_page_config(page_title="Ranking · RegDoc", page_icon=icone_pagina(), layout="wide")
 
@@ -134,17 +135,25 @@ cron = calcular_anos_em_alerta(ano_sel)
 df_rank = df_rank.merge(cron, on="CO_MUNICIPIO", how="left")
 df_rank["CRONICIDADE"] = df_rank["ANOS_EM_ALERTA"].apply(rotulo_cronicidade)
 
-df_tabela = df_rank.head(n_top)[["NO_MUNICIPIO","SG_UF","IRD","CRONICIDADE","ATU","AFD","IED","ICG","RISCO"]].copy()
+_ied_ano = ied_municipios(None, "Todas as redes", (int(ano_sel),))
+if not _ied_ano.empty:
+    df_rank = df_rank.merge(_ied_ano[["CO_MUNICIPIO"] + list(COLS_ELEVADO)], on="CO_MUNICIPIO", how="left")
+else:
+    for _c in COLS_ELEVADO:
+        df_rank[_c] = np.nan
+
+df_tabela = df_rank.head(n_top)[["NO_MUNICIPIO","SG_UF","IRD","CRONICIDADE","ATU","AFD","ICG"] + list(COLS_ELEVADO) + ["RISCO"]].copy()
 df_tabela["IRD"] = df_tabela["IRD"].apply(lambda x: formatar_br(x, 3))
 df_tabela["ATU"] = df_tabela["ATU"].apply(lambda x: formatar_br(x, 1))
 df_tabela["AFD"] = df_tabela["AFD"].apply(lambda x: formatar_br(x, 1))
-df_tabela["IED"] = df_tabela["IED"].apply(lambda x: formatar_br(x, 1))
+for _c in COLS_ELEVADO:
+    df_tabela[_c] = df_tabela[_c].apply(lambda x: formatar_br(x, 1) if pd.notna(x) else "—")
 df_tabela["ICG"] = df_tabela["ICG"].apply(lambda x: formatar_br(x, 2))
 df_tabela = df_tabela.rename(columns={
     "NO_MUNICIPIO":"Município","SG_UF":"Estado",
     "IRD":"Regularidade","CRONICIDADE":"Há quanto tempo em alerta",
     "ATU":"Alunos/turma",
-    "AFD":"Formação (%)","IED":"Menor esforço docente (%)","ICG":"Complexidade","RISCO":"Situação"
+    "AFD":"Formação (%)","ICG":"Complexidade","RISCO":"Situação", **COLS_ELEVADO
 })
 st.dataframe(df_tabela, use_container_width=True, hide_index=True)
 

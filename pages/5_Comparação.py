@@ -7,6 +7,7 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from utils.dados import carregar_escola, carregar_municipal, formatar_br, aplicar_estilo_global, sombrear_pandemia, icone_pagina
+from utils.ied import TOOLTIP_IED, ETAPAS, COLS_ELEVADO, ied_escolas, ied_municipios, fmt_pct
 
 st.set_page_config(page_title="Comparação · RegDoc", page_icon=icone_pagina(), layout="wide")
 aplicar_estilo_global()
@@ -33,7 +34,7 @@ TOOLTIPS = {
     "IRD": "O IRD mede se os mesmos professores continuam na escola de um ano para o outro. Escala de 0 a 5 — quanto maior, mais estável é o corpo docente. Fonte: Nota Técnica INEP nº 11/2015.",
     "ATU": "ATU — Média de Alunos por Turma. Turmas maiores aumentam a sobrecarga docente e estão associadas a maior rotatividade. Fonte: Censo Escolar/INEP.",
     "AFD": "AFD — Adequação da Formação Docente. Percentual de professores que lecionam na área em que se formaram. Quanto maior, melhor. Fonte: Censo Escolar/INEP.",
-    "IED": "IED — Indicador de Esforço Docente (Inep). Mede o peso da rotina de trabalho do professor. O Inep classifica cada docente em seis níveis, de 1 (rotina mais leve) a 6 (rotina mais pesada), conforme o número de alunos, escolas, turnos e etapas em que atua. O RegDoc mostra o percentual de docentes do Ensino Fundamental no Nível 1: quanto MAIOR o valor, mais docentes com rotina leve. O indicador oficial do Inep olha para o outro extremo: os docentes de rotina pesada. Não indica duplo vínculo. Fonte: Censo Escolar/Inep, Nota Técnica nº 039/2014.",
+    "IED": TOOLTIP_IED,
     "ICG": "ICG — Complexidade de Gestão da Escola. Combina porte, turnos, etapas e modalidades. Escala de 1 a 6. Fonte: Censo Escolar/INEP.",
 }
 
@@ -143,6 +144,12 @@ with aba_esc:
     else:
         # Montar dados
         dados_comp = []
+        _ied_sel = ied_escolas(tuple(sorted({str(e["CO_ENTIDADE"]) for e in st.session_state.escolas_selecionadas})))
+        def _elev_escola(co, ano):
+            if _ied_sel.empty:
+                return {c: None for c in COLS_ELEVADO}
+            _l = _ied_sel[(_ied_sel["CO_ENTIDADE"] == str(co)) & (_ied_sel["ANO"] == int(ano))]
+            return {c: (_l.iloc[0].get(c) if not _l.empty else None) for c in COLS_ELEVADO}
         for esc in st.session_state.escolas_selecionadas:
             linha = df_esc[(df_esc["CO_ENTIDADE"]==esc["CO_ENTIDADE"]) & (df_esc["ANO"]==esc["ANO"])]
             if not linha.empty:
@@ -156,8 +163,9 @@ with aba_esc:
                     "Ano": esc["ANO"],
                     "CO_ENTIDADE": esc["CO_ENTIDADE"],
                     "IRD": r["IRD"], "ATU": r.get("ATU"),
-                    "AFD": r.get("AFD"), "IED": r.get("IED"),
-                    "ICG": r.get("ICG"), "Media_nac": media_nac
+                    "AFD": r.get("AFD"),
+                    "ICG": r.get("ICG"), "Media_nac": media_nac,
+                    **_elev_escola(esc["CO_ENTIDADE"], esc["ANO"]),
                 })
 
         if not dados_comp:
@@ -174,6 +182,12 @@ with aba_esc:
                 cols_cards = st.columns(n_escolas)
                 for i, d in enumerate(dados_comp):
                     cor, bg = cor_ird(d["IRD"], d["Media_nac"])
+                    _ied_rows = "".join(
+                        "<div style='display:flex;justify-content:space-between;margin-bottom:4px;'>"
+                        f"<span>Esforço elevado: {_n.lower()} {tooltip_html('IED')}</span>"
+                        f"<strong>{fmt_pct(d.get('ELEV_' + _e))}</strong></div>"
+                        for _e, _n in ETAPAS.items()
+                        if d.get("ELEV_" + _e) is not None and pd.notna(d.get("ELEV_" + _e)))
                     with cols_cards[i]:
                         st.markdown(f"""
                         <div style="background:{bg};border:2px solid {cor};border-radius:10px;
@@ -191,10 +205,7 @@ with aba_esc:
                                 <span>Formação (%) {tooltip_html('AFD')}</span>
                                 <strong>{formatar_br(d['AFD'],1)}{'%' if pd.notna(d['AFD']) else ''}</strong>
                             </div>
-                            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                                <span>Menor esforço {tooltip_html('IED')}</span>
-                                <strong>{formatar_br(d['IED'],1)}{'%' if pd.notna(d['IED']) else ''}</strong>
-                            </div>
+                            {_ied_rows}
                             <div style="display:flex;justify-content:space-between;">
                                 <span>Complexidade {tooltip_html('ICG')}</span>
                                 <strong>{formatar_br(d['ICG'],1)}</strong>
@@ -204,8 +215,8 @@ with aba_esc:
                 # Radar
                 st.markdown("---")
                 st.markdown("### Perfil completo dos indicadores")
-                st.caption("Todos os eixos em escala de 0 a 100. Alunos/turma e Complexidade estão invertidos (quanto maior a área, menor a carga ou a complexidade). Docentes no Nível 1 (%) é o percentual de docentes de menor esforço do Inep e não indica melhor ou pior: use o gráfico para comparar o formato do perfil das escolas, não como nota única.")
-                categorias = ["Regularidade (IRD)","Alunos/turma (inv.)","Formação (%)","Docentes no Nível 1 (%)","Complexidade (inv.)"]
+                st.caption("Todos os eixos em escala de 0 a 100. Alunos/turma e Complexidade estão invertidos (quanto maior a área, menor a carga ou a complexidade). Use o gráfico para comparar o formato do perfil das escolas, não como nota única.")
+                categorias = ["Regularidade (IRD)","Alunos/turma (inv.)","Formação (%)","Complexidade (inv.)"]
                 cores_esc  = ["#1a3a5c","#c0392b","#27ae60","#f39c12","#8e44ad"]
                 fig_radar  = go.Figure()
                 _avisos_radar = []
@@ -214,7 +225,6 @@ with aba_esc:
                         (d["IRD"]/5)*100        if pd.notna(d["IRD"]) else None,
                         max(0,100-((d["ATU"]/40)*100)) if pd.notna(d["ATU"]) else None,
                         d["AFD"]                if pd.notna(d["AFD"]) else None,
-                        d["IED"]                if pd.notna(d["IED"]) else None,
                         max(0,100-((d["ICG"]/6)*100)) if pd.notna(d["ICG"]) else None,
                     ]
                     _sem = [c for c, v in zip(categorias, valores) if v is None]
@@ -240,21 +250,22 @@ with aba_esc:
                 st.markdown(f"### Tabela comparativa — {n_escolas} escolas")
                 st.caption("Com mais de 5 escolas, a tabela interativa substitui os cards e o radar para melhor visualização.")
 
-                df_tab_int = df_comp[["Nome completo","Município","UF","Ano","IRD","ATU","AFD","IED","ICG","Media_nac"]].copy()
+                df_tab_int = df_comp[["Nome completo","Município","UF","Ano","IRD","ATU","AFD","ICG","Media_nac"] + list(COLS_ELEVADO)].copy()
                 df_tab_int["Situação"] = df_tab_int.apply(
                     lambda r: "🟢 Favorável" if pd.notna(r["IRD"]) and r["IRD"] >= r["Media_nac"]
                     else "🟡 Atenção" if pd.notna(r["IRD"]) and r["IRD"] >= r["Media_nac"]*0.85
                     else "🔴 Alerta" if pd.notna(r["IRD"]) else "⚪ Sem dados", axis=1
                 )
-                df_exib = df_tab_int[["Nome completo","Município","UF","Ano","IRD","ATU","AFD","IED","ICG","Situação"]].copy()
+                df_exib = df_tab_int[["Nome completo","Município","UF","Ano","IRD","ATU","AFD","ICG"] + list(COLS_ELEVADO) + ["Situação"]].copy()
                 df_exib["IRD"] = df_exib["IRD"].apply(lambda x: formatar_br(x,2))
                 df_exib["ATU"] = df_exib["ATU"].apply(lambda x: formatar_br(x,1))
                 df_exib["AFD"] = df_exib["AFD"].apply(lambda x: formatar_br(x,1))
-                df_exib["IED"] = df_exib["IED"].apply(lambda x: formatar_br(x,1))
+                for _c in COLS_ELEVADO:
+                    df_exib[_c] = df_exib[_c].apply(lambda x: formatar_br(x,1) if pd.notna(x) else "—")
                 df_exib["ICG"] = df_exib["ICG"].apply(lambda x: formatar_br(x,1))
                 df_exib = df_exib.rename(columns={
                     "Nome completo":"Escola","IRD":"Regularidade",
-                    "ATU":"Alunos/turma","AFD":"Formação (%)","IED":"Menor esforço (%)","ICG":"Complexidade"
+                    "ATU":"Alunos/turma","AFD":"Formação (%)","ICG":"Complexidade", **COLS_ELEVADO
                 })
                 st.dataframe(df_exib, use_container_width=True, hide_index=True)
 
@@ -332,11 +343,13 @@ with aba_esc:
             # ── Tabela e download ──────────────────────────────────────────────
             st.markdown("---")
             st.markdown("### Tabela comparativa completa")
-            df_dl = df_comp[["Nome completo","Município","UF","Ano","IRD","ATU","AFD","IED","ICG"]].copy()
-            for col in ["IRD","ATU","AFD","IED","ICG"]:
+            df_dl = df_comp[["Nome completo","Município","UF","Ano","IRD","ATU","AFD","ICG"] + list(COLS_ELEVADO)].copy()
+            for col in ["IRD","ATU","AFD","ICG"]:
                 df_dl[col] = df_dl[col].apply(lambda x: formatar_br(x,2))
+            for col in COLS_ELEVADO:
+                df_dl[col] = df_dl[col].apply(lambda x: formatar_br(x,1) if pd.notna(x) else "—")
             df_dl = df_dl.rename(columns={"Nome completo":"Escola","IRD":"Regularidade",
-                "ATU":"Alunos/turma","AFD":"Formação (%)","IED":"Menor esforço (%)","ICG":"Complexidade"})
+                "ATU":"Alunos/turma","AFD":"Formação (%)","ICG":"Complexidade", **COLS_ELEVADO})
             st.dataframe(df_dl, use_container_width=True, hide_index=True)
             csv = df_dl.to_csv(index=False).encode("utf-8-sig")
             st.download_button("📥 Baixar comparação (CSV)", data=csv,
@@ -400,6 +413,12 @@ with aba_mun:
         st.info("Adicione pelo menos 2 municípios para comparar.")
     else:
         dados_mun_comp = []
+        _ied_msel = ied_municipios(tuple(sorted({str(m["CO_MUNICIPIO"]) for m in st.session_state.municipios_selecionados})))
+        def _elev_mun(co, ano):
+            if _ied_msel.empty:
+                return {c: None for c in COLS_ELEVADO}
+            _l = _ied_msel[(_ied_msel["CO_MUNICIPIO"] == str(co)) & (_ied_msel["ANO"] == int(ano))]
+            return {c: (_l.iloc[0].get(c) if not _l.empty else None) for c in COLS_ELEVADO}
         for m in st.session_state.municipios_selecionados:
             linha = df_mun[(df_mun["CO_MUNICIPIO"]==m["CO_MUNICIPIO"]) & (df_mun["ANO"]==m["ANO"])]
             if not linha.empty:
@@ -410,8 +429,9 @@ with aba_mun:
                     "UF": m["SG_UF"],
                     "Ano": m["ANO"],
                     "IRD": r["IRD"], "ATU": r.get("ATU"),
-                    "AFD": r.get("AFD"), "IED": r.get("IED"),
-                    "ICG": r.get("ICG"), "Media_nac": media_nac
+                    "AFD": r.get("AFD"),
+                    "ICG": r.get("ICG"), "Media_nac": media_nac,
+                    **_elev_mun(m["CO_MUNICIPIO"], m["ANO"]),
                 })
 
         if not dados_mun_comp:
@@ -465,15 +485,16 @@ with aba_mun:
             # Tabela comparativa de todos os indicadores
             st.markdown("---")
             st.markdown("### Tabela comparativa de indicadores")
-            df_mun_tab = df_mun_comp[["Município","UF","Ano","IRD","ATU","AFD","IED","ICG"]].copy()
+            df_mun_tab = df_mun_comp[["Município","UF","Ano","IRD","ATU","AFD","ICG"] + list(COLS_ELEVADO)].copy()
             df_mun_tab["IRD"] = df_mun_tab["IRD"].apply(lambda x: formatar_br(x,2))
             df_mun_tab["ATU"] = df_mun_tab["ATU"].apply(lambda x: formatar_br(x,1))
             df_mun_tab["AFD"] = df_mun_tab["AFD"].apply(lambda x: formatar_br(x,1))
-            df_mun_tab["IED"] = df_mun_tab["IED"].apply(lambda x: formatar_br(x,1))
+            for _c in COLS_ELEVADO:
+                df_mun_tab[_c] = df_mun_tab[_c].apply(lambda x: formatar_br(x,1) if pd.notna(x) else "—")
             df_mun_tab["ICG"] = df_mun_tab["ICG"].apply(lambda x: formatar_br(x,1))
             df_mun_tab = df_mun_tab.rename(columns={
                 "IRD":"Regularidade","ATU":"Alunos/turma",
-                "AFD":"Formação (%)","IED":"Menor esforço (%)","ICG":"Complexidade"
+                "AFD":"Formação (%)","ICG":"Complexidade", **COLS_ELEVADO
             })
             st.dataframe(df_mun_tab, use_container_width=True, hide_index=True)
 
