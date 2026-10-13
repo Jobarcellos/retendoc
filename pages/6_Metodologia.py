@@ -157,9 +157,9 @@ Escolas sem ATU publicado pelo Inep aparecem sem valor.
   Ao escolher uma rede, o valor do município é o publicado pelo Inep para essa rede.
   Fonte: Nota Técnica Inep nº 039/2014.
 
-**O que isso significa para você:** a média simples do IRD dá o mesmo peso a uma escola
-pequena e a uma grande. Use o IRD municipal para comparar e priorizar redes, e os valores
-de escola para olhar cada unidade.
+**O que isso significa para você:** o IRD do município é a média simples do IRD das
+escolas, e cada escola tem o mesmo peso. Use o IRD municipal para comparar e priorizar
+redes, e os valores de escola para olhar cada unidade.
 """)
 
 st.markdown("### 6. O que o RegDoc não faz")
